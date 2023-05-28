@@ -76,8 +76,14 @@ if(file.exists("MODELS/MODEL_A1.rds")){
 M_model  = stan_model("MODELS/MODEL_A1.stan")
 T_model  = sampling(M_model,data = data_list,warmup=50,iter=150,chains=1,init="random")
 
+summaryTable = as.data.frame(summary(T_model,compartment_names)[[1]])
+summaryTable$populationNames = rownames(summaryTable)
+summaryTable$t    = sub(",.*","",sub(".*y\\[", "", summaryTable$populationNames))  # Extract characters after pattern
+summaryTable$taxa = sub("\\].*","",sub(".*,", "", summaryTable$populationNames))  # Extract characters after pattern
+summaryTable_use = summaryTable[c('t','taxa','mean')]
 
-
+summaryTable_use_tx1 =summaryTable_use %>% filter(taxa==1)
+summaryTable_use_tx11=summaryTable_use %>% filter(taxa==11)
 
 
 

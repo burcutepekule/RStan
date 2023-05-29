@@ -1,0 +1,8 @@
+
+SAMPLING FOR MODEL 'MODEL_B0' NOW (CHAIN 1).
+Chain 1: phi: [0.523953,0.649703,0.15205,5.98765,1.67333,5.92325,0.171766,6.09794,1.33959,1.11527]
+
+Chain 1: Unrecoverable error evaluating the log probability at the initial value.
+Chain 1: Exception: CVode failed with error flag -1.  (in 'model93062f2d4250_MODEL_B0' at line 123)
+
+[1] "Error : Exception: CVode failed with error flag -1.  (in 'model93062f2d4250_MODEL_B0' at line 123)"

@@ -135,25 +135,6 @@ abundanceArray_allSubjects_mum = array(arrays_keep, dim=c(length(days_array_mum)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # ##### sanity check - difference should be zero!
 # all_sum=0
 # for(tx in taxa_array){

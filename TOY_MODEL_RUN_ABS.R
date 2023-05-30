@@ -5,19 +5,23 @@ setwd('/Users/burcutepekule/Library/CloudStorage/Dropbox/criticalwindow/code/R/R
 source("SETUP.R")
 
 t_end=30
-source('TOY_MODEL_ODE.R')
+source('TOY_MODEL_ODE_ABS.R')
 
 # HUMAN MICROBIOME PROJECT DATA
 
 # y0_meanSubjects
 # abundanceArray_meanSubjects
 
-abundanceArray_meanSubjects = out_use[2:dim(out_use)[1],]
+abundanceArray_meanSubjects = round(out_use[2:dim(out_use)[1],]) #make it integer to use neg_binomial_2_lpmf likelihood
+# abundanceArray_meanSubjects = out_use[2:dim(out_use)[1],] #can use double for normal_lpdf likelihood
 y0_meanSubjects             = out_init
-phi_use                     = 1E-4
+phi_use                     = 1E6
 days_array                  = out[2:dim(out)[1],]$time
 taxa_array                  = colnames(out_use)
 
+
+days_array                  = out[2:dim(out)[1],]$time
+taxa_array                  = colnames(out_use)
 
 graphics.off()
 abundanceArray_meanSubjects_longer = abundanceArray_meanSubjects
@@ -44,11 +48,11 @@ data_list = list(
   numTimeSteps = length(days_array),
   y0 = y0_meanSubjects,
   observations = abundanceArray_meanSubjects,
-  
+
   p_mu           = c(0.15,0.01),
   p_a_intra      = c(1,0.01),
   p_a_inter      = c(0.01,0.1),
-  p_phi          = 1/1E-4,
+  p_phi          = 1/phi_use,
   
   t0        = 0, #starting time
   t_data    = days_array, #time bins of data
@@ -56,15 +60,15 @@ data_list = list(
 )
 
 # RECOMPILE EACH TIME
-if(file.exists("MODELS/MODEL_TOY.rds")){
-  file.remove("MODELS/MODEL_TOY.rds")
+if(file.exists("MODELS/MODEL_TOY_ABS.rds")){
+  file.remove("MODELS/MODEL_TOY_ABS.rds")
 }
 
 sinking = 0
 wu = 100
 ch = 500
 
-M_model  = stan_model("MODELS/MODEL_TOY.stan")
+M_model  = stan_model("MODELS/MODEL_TOY_ABS.stan")
 T_model  = sampling(M_model,data = data_list,warmup=wu,iter=ch,seed=96,chains=4,init="random")
 
 # if (sinking==0){

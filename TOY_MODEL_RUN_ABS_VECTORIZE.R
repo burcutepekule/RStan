@@ -60,15 +60,15 @@ data_list = list(
 )
 
 # RECOMPILE EACH TIME
-if(file.exists("MODELS/MODEL_TOY_ABS.rds")){
-  file.remove("MODELS/MODEL_TOY_ABS.rds")
+if(file.exists("MODELS/MODEL_TOY_ABS_VECTORIZE.rds")){
+  file.remove("MODELS/MODEL_TOY_ABS_VECTORIZE.rds")
 }
 
 sinking = 0
-wu = 50
-ch = 250
+wu = 100
+ch = 500
 
-M_model  = stan_model("MODELS/MODEL_TOY_ABS.stan")
+M_model  = stan_model("MODELS/MODEL_TOY_ABS_VECTORIZE.stan")
 T_model  = sampling(M_model,data = data_list,warmup=wu,iter=ch,seed=96,chains=4,init="random")
 
 # if (sinking==0){

@@ -7,41 +7,53 @@ functions {
   ) {
     int numTaxa      = x_i[1]; // number of taxa
     int numTimeSteps = x_i[2]; // number of time steps with observed data
-    real dydt[numTaxa]; //
-
-    real mu_1;
-    real mu_2;
-    real mu_3;
-    real a_11;
-    real a_22;
-    real a_33;
-    real a_12;
-    real a_13;
-    real a_21;
-    real a_23;
-    real a_31;
-    real a_32;
     
+    real dydt[numTaxa];
     real scale = 1e-6; // NEED TO PUT THIS SCALING FACTOR HERE, DOESN'T WORK WITH DISTRIBUTIONS
     
-    // Free parameters
-    mu_1   = theta[1];
-    mu_2   = theta[2];
-    mu_3   = theta[3];
-    a_11   = scale*theta[4];
-    a_22   = scale*theta[5];
-    a_33   = scale*theta[6];
-    a_12   = scale*theta[7];
-    a_13   = scale*theta[8];
-    a_21   = scale*theta[9];
-    a_23   = scale*theta[10];
-    a_31   = scale*theta[11];
-    a_32   = scale*theta[12];
+    real y_use[numTaxa];
+    real growthRate_vector[numTaxa];
+    real interactionMat_vector_diag[numTaxa];
+    real interactionMat_vector_nondiag[numTaxa*numTaxa-numTaxa];
+    real interactionMat_vector[numTaxa*numTaxa];
+    matrix[numTaxa,numTaxa] interactionMat;
+    real interactions_tx;
+    row_vector[numTaxa] interactionvectemp;
+    row_vector[numTaxa] abundancevectemp;
+    real y_uncoated[numTaxa];
+    real y_coated[numTaxa];
+    int counter_diag;
+    int counter_nondiag;
 
-    dydt[1]  = y[1]*(mu_1 - y[1]*a_11 + y[2]*a_21 + y[3]*a_31);
-    dydt[2]  = y[2]*(mu_2 + y[1]*a_12 - y[2]*a_22 + y[3]*a_32);
-    dydt[3]  = y[3]*(mu_3 + y[1]*a_13 + y[2]*a_23 - y[3]*a_33);
+    // Free parameters : separate counter diag vs non-diag because diagonal terms will be negative for sure!
+    growthRate_vector             = theta[1:numTaxa];
+    interactionMat_vector_diag    = theta[(1+numTaxa):(numTaxa+numTaxa)];
+    interactionMat_vector_nondiag = theta[(1+numTaxa+numTaxa):(numTaxa+numTaxa*numTaxa)];
     
+    // Build the matrix with non-diagonal and diagonal terms
+    counter_diag    = 1;
+    counter_nondiag = 1;
+    for(r in 1:numTaxa){
+      for(c in 1:numTaxa){
+        if(r==c){
+          interactionMat[r,c]=-1*scale*interactionMat_vector_diag[counter_diag];// will sample this from beta distribution so will be strictly positive
+          counter_diag = counter_diag + 1;
+        }else{
+          interactionMat[r,c]=+1*scale*interactionMat_vector_nondiag[counter_nondiag];
+          counter_nondiag = counter_nondiag + 1;
+        }
+      }
+    }
+    
+    for(k in 1:numTaxa){
+      abundancevectemp[k] = y[k];
+    }
+    
+    for(tx in 1:numTaxa){
+      interactionvectemp = interactionMat[tx,1:numTaxa];
+      interactions_tx    = dot_product(interactionvectemp,abundancevectemp); // checked, this works 
+      dydt[tx]           = y[tx]*(growthRate_vector[tx] + interactions_tx);
+    }
     return(dydt);
   }
 }
@@ -54,7 +66,7 @@ data {
   real y0[numTaxa];
   // real observations[numTimeSteps,numTaxa];
   int observations[numTimeSteps,numTaxa];
-
+  
   // priors
   real p_mu[2];
   real p_a_intra[2];
@@ -70,35 +82,26 @@ data {
 transformed data {
   real x_r[numTaxa]; 
   int  x_i[2]; 
-  x_i[1]  = numTaxa;
-  x_i[2]  = numTimeSteps;
-  x_r[1]  = y0[1];
-  x_r[2]  = y0[2];
-  x_r[3]  = y0[3];
+  x_i[1]          = numTaxa;
+  x_i[2]          = numTimeSteps;
+  x_r[1:numTaxa]  = y0[1:numTaxa];
 }
 
 parameters{
   real<lower=0> phi[numTaxa]; // dispersion parameters - BE CAREFUL WITH THIS WHEN YOU CHANGE THE SCALE OF DATA!
-  real<lower=0> mu_1; 
-  real<lower=0> mu_2; 
-  real<lower=0> mu_3; 
-  real<lower=0> a_11; 
-  real<lower=0> a_22; 
-  real<lower=0> a_33; 
-  real a_12; 
-  real a_13;
-  real a_21; 
-  real a_23;
-  real a_31; 
-  real a_32;
+  real<lower=0> growthRate_vector[numTaxa]; // growth rates
+  real<lower=0> interactionMat_vector_diag[numTaxa]; // -1* when building matrix
+  real interactionMat_vector_nondiag[numTaxa*numTaxa-numTaxa]; // 
 }
 
 transformed parameters {
   real theta[numTaxa+numTaxa*numTaxa]; // vector of parameterss
   real y[numTimeSteps,numTaxa]; // raw ODE output 
   matrix[numTimeSteps,numTaxa] output_mat;
-  
-  theta = {mu_1,mu_2,mu_3,a_11,a_22,a_33,a_12,a_13,a_21,a_23,a_31,a_32};
+
+  theta[1:numTaxa] = growthRate_vector;
+  theta[(1+numTaxa):(numTaxa+numTaxa)] = interactionMat_vector_diag;
+  theta[(1+numTaxa+numTaxa):(numTaxa+numTaxa*numTaxa)] = interactionMat_vector_nondiag;
   
   // run ODE solver
   y = integrate_ode_bdf(
@@ -115,31 +118,21 @@ transformed parameters {
     for(ti in 1:numTimeSteps){
       for(tx in 1:numTaxa){
         output_mat[ti,tx]  = y[ti,tx];
-        // print(output_mat[ti,tx])
       }
     }
 }
 
 model {
+  
   // priors
-  mu_1 ~ normal(p_mu[1],p_mu[2]);
-  mu_2 ~ normal(p_mu[1],p_mu[2]);
-  mu_3 ~ normal(p_mu[1],p_mu[2]);
-  a_11 ~ normal(p_a_intra[1],p_a_intra[2]);
-  a_22 ~ normal(p_a_intra[1],p_a_intra[2]);
-  a_33 ~ normal(p_a_intra[1],p_a_intra[2]);
-  a_12 ~ normal(p_a_inter[1],p_a_inter[2]);
-  a_13 ~ normal(p_a_inter[1],p_a_inter[2]);
-  a_21 ~ normal(p_a_inter[1],p_a_inter[2]);
-  a_23 ~ normal(p_a_inter[1],p_a_inter[2]);
-  a_31 ~ normal(p_a_inter[1],p_a_inter[2]);
-  a_32 ~ normal(p_a_inter[1],p_a_inter[2]);
+  growthRate_vector ~ normal(p_mu[1],p_mu[2]);
+  interactionMat_vector_diag ~ normal(p_a_intra[1],p_a_intra[2]);
+  interactionMat_vector_nondiag ~ normal(p_a_inter[1],p_a_inter[2]);
   phi ~ exponential(p_phi);
   
   // likelihood - first for total abundances
   for(ti in 1:numTimeSteps){
     for(tx in 1:numTaxa){
-      // print(output_mat[ti,tx])
       // target += normal_lpdf(output_mat[ti,tx] | observations[ti,tx], phi[tx]);
       target += neg_binomial_2_lpmf( observations[ti,tx] | output_mat[ti,tx] , phi[tx]);
     }

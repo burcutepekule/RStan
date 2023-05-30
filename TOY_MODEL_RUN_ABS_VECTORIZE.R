@@ -15,7 +15,9 @@ source('TOY_MODEL_ODE_ABS.R')
 abundanceArray_meanSubjects = round(out_use[2:dim(out_use)[1],]) #make it integer to use neg_binomial_2_lpmf likelihood
 # abundanceArray_meanSubjects = out_use[2:dim(out_use)[1],] #can use double for normal_lpdf likelihood
 y0_meanSubjects             = out_init
-phi_use                     = 1E6
+# phi_use                     = 1E6 # SEEMS LIKE 1E6 IS THE ONE THAT WORKS, SO NEED TO GET THIS FROM THE ORDER OF MAG. OF THE DATA
+phi_use_exp                 = max(round(log10(y0_meanSubjects)));
+phi_use                     = 10^phi_use_exp # SEEMS LIKE 1E6 IS THE ONE THAT WORKS, SO NEED TO GET THIS FROM THE ORDER OF MAG. OF THE DATA
 days_array                  = out[2:dim(out)[1],]$time
 taxa_array                  = colnames(out_use)
 
@@ -65,8 +67,8 @@ if(file.exists("MODELS/MODEL_TOY_ABS_VECTORIZE.rds")){
 }
 
 sinking = 0
-wu = 100
-ch = 500
+wu = 50
+ch = 250
 
 M_model  = stan_model("MODELS/MODEL_TOY_ABS_VECTORIZE.stan")
 T_model  = sampling(M_model,data = data_list,warmup=wu,iter=ch,seed=96,chains=4,init="random")
@@ -111,9 +113,11 @@ ggplot() +
   labs(x="sample index",y="abundance")
 
 
-compartment_names = c('a_11','a_22','a_33')
+compartment_names = c('growthRate_vector[1]','growthRate_vector[2]','growthRate_vector[3]')
 summaryTable = as.data.frame(summary(T_model,compartment_names)[[1]])
+print(summaryTable)
 
-
-
+compartment_names = c('interactionMat_vector_diag[1]','interactionMat_vector_diag[2]','interactionMat_vector_diag[3]')
+summaryTable = as.data.frame(summary(T_model,compartment_names)[[1]])
+print(summaryTable)
 

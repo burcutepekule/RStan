@@ -7,15 +7,18 @@ functions {
   ) {
     int numTaxa      = x_i[1]; // number of taxa
     int numTimeSteps = x_i[2]; // number of time steps with observed data
+    real p_phi       = x_r[numTaxa+1];
     
     real dydt[numTaxa];
-    real scale = 1e-6; // NEED TO PUT THIS SCALING FACTOR HERE, DOESN'T WORK WITH DISTRIBUTIONS
+    // real scale = 1e-6; // NEED TO PUT THIS SCALING FACTOR HERE, DOESN'T WORK WITH DISTRIBUTIONS
+    real scale; // LETS SEE IF IT MAKES SENSE TO CONNECT THIS TO PHI (DISPERSION PARAMETER)
     
     real y_use[numTaxa];
     real growthRate_vector[numTaxa];
     real interactionMat_vector_diag[numTaxa];
     real interactionMat_vector_nondiag[numTaxa*numTaxa-numTaxa];
     real interactionMat_vector[numTaxa*numTaxa];
+    real phi_vector[numTaxa];
     matrix[numTaxa,numTaxa] interactionMat;
     real interactions_tx;
     row_vector[numTaxa] interactionvectemp;
@@ -30,6 +33,8 @@ functions {
     interactionMat_vector_diag    = theta[(1+numTaxa):(numTaxa+numTaxa)];
     interactionMat_vector_nondiag = theta[(1+numTaxa+numTaxa):(numTaxa+numTaxa*numTaxa)];
     
+    scale = p_phi;  // LETS SEE IF IT MAKES SENSE TO CONNECT THIS TO PHI (DISPERSION PARAMETER)
+
     // Build the matrix with non-diagonal and diagonal terms
     counter_diag    = 1;
     counter_nondiag = 1;
@@ -80,11 +85,12 @@ data {
 }
 
 transformed data {
-  real x_r[numTaxa]; 
+  real x_r[numTaxa+1]; // y0 and the dispersion parameter 
   int  x_i[2]; 
   x_i[1]          = numTaxa;
   x_i[2]          = numTimeSteps;
   x_r[1:numTaxa]  = y0[1:numTaxa];
+  x_r[numTaxa+1]  = p_phi;
 }
 
 parameters{

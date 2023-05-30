@@ -154,8 +154,7 @@ model {
     for(tx in 1:numTaxa){
       // target += normal_lpdf( observations[ti,tx] | output_mat[ti,tx] , phi[tx]);
       // target += normal_lpdf( output_mat[ti,tx] | observations[ti,tx], phi[tx]);
-      // target += normal_lpdf( output_mat[ti,tx] | observations[ti,tx], phi[tx]);
-      target += neg_binomial_2_lpmf( observations[ti,tx] |output_mat[ti,tx] , phi[1]);
+      target += neg_binomial_2_lpmf( observations[ti,tx] |output_mat[ti,tx] , phi[tx]);
     }
   }
 }

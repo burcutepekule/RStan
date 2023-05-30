@@ -70,17 +70,27 @@ if(file.exists("MODELS/MODEL_B0.rds")){
 }
 
 sinking = 0
+wu = 50
+ch = 150
 
 if (sinking==0){
   M_model  = stan_model("MODELS/MODEL_B0.stan")
-  T_model  = sampling(M_model,data = data_list,warmup=50,iter=150,chains=1,init="random")
+  T_model  = sampling(M_model,data = data_list,warmup=wu,iter=ch,chains=1,init="random")
 }else{
   sink("sink-examp.txt")
   M_model  = stan_model("MODELS/MODEL_B0.stan")
-  T_model  = sampling(M_model,data = data_list,warmup=50,iter=150,chains=1,init="random")
+  T_model  = sampling(M_model,data = data_list,warmup=wu,iter=ch,chains=1,init="random")
   sink()
 }
 
+compartment_names = 'y'
+summaryTable = as.data.frame(summary(T_model,compartment_names)[[1]])
+summaryTable$populationNames = rownames(summaryTable)
+summaryTable$t    = sub(",.*","",sub(".*y\\[", "", summaryTable$populationNames))  # Extract characters after pattern
+summaryTable$taxa = sub("\\].*","",sub(".*,", "", summaryTable$populationNames))  # Extract characters after pattern
+summaryTable_use = summaryTable[c('t','taxa','mean')]
+
+ggplot(summaryTable_use, aes(x = t, y = mean, color = taxa)) + geom_point() 
 
 
 

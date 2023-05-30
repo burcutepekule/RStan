@@ -1,8 +1,66 @@
 
-SAMPLING FOR MODEL 'MODEL_B0' NOW (CHAIN 1).
-Chain 1: phi: [0.523953,0.649703,0.15205,5.98765,1.67333,5.92325,0.171766,6.09794,1.33959,1.11527]
+SAMPLING FOR MODEL 'MODEL_TOY_2' NOW (CHAIN 1).
+Chain 1: 
+Chain 1: Gradient evaluation took 0.064926 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 649.26 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+Chain 1: WARNING: There aren't enough warmup iterations to fit the
+Chain 1:          three stages of adaptation as currently configured.
+Chain 1:          Reducing each adaptation stage to 15%/75%/10% of
+Chain 1:          the given number of warmup iterations:
+Chain 1:            init_buffer = 7
+Chain 1:            adapt_window = 38
+Chain 1:            term_buffer = 5
+Chain 1: 
+Chain 1: Iteration:   1 / 150 [  0%]  (Warmup)
+Chain 1: Iteration:  15 / 150 [ 10%]  (Warmup)
+Chain 1: Iteration:  30 / 150 [ 20%]  (Warmup)
+Chain 1: Iteration:  45 / 150 [ 30%]  (Warmup)
+Chain 1: Iteration:  51 / 150 [ 34%]  (Sampling)
+Chain 1: Iteration:  65 / 150 [ 43%]  (Sampling)
+Chain 1: Iteration:  80 / 150 [ 53%]  (Sampling)
+Chain 1: Iteration:  95 / 150 [ 63%]  (Sampling)
+Chain 1: Iteration: 110 / 150 [ 73%]  (Sampling)
+Chain 1: Iteration: 125 / 150 [ 83%]  (Sampling)
+Chain 1: Iteration: 140 / 150 [ 93%]  (Sampling)
+Chain 1: Iteration: 150 / 150 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 22.375 seconds (Warm-up)
+Chain 1:                40.7347 seconds (Sampling)
+Chain 1:                63.1097 seconds (Total)
+Chain 1: 
 
-Chain 1: Unrecoverable error evaluating the log probability at the initial value.
-Chain 1: Exception: CVode failed with error flag -1.  (in 'model93062f2d4250_MODEL_B0' at line 123)
-
-[1] "Error : Exception: CVode failed with error flag -1.  (in 'model93062f2d4250_MODEL_B0' at line 123)"
+SAMPLING FOR MODEL 'MODEL_TOY_2' NOW (CHAIN 1).
+Chain 1: 
+Chain 1: Gradient evaluation took 0.076842 seconds
+Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 768.42 seconds.
+Chain 1: Adjust your expectations accordingly!
+Chain 1: 
+Chain 1: 
+Chain 1: WARNING: There aren't enough warmup iterations to fit the
+Chain 1:          three stages of adaptation as currently configured.
+Chain 1:          Reducing each adaptation stage to 15%/75%/10% of
+Chain 1:          the given number of warmup iterations:
+Chain 1:            init_buffer = 7
+Chain 1:            adapt_window = 38
+Chain 1:            term_buffer = 5
+Chain 1: 
+Chain 1: Iteration:   1 / 150 [  0%]  (Warmup)
+Chain 1: Iteration:  15 / 150 [ 10%]  (Warmup)
+Chain 1: Iteration:  30 / 150 [ 20%]  (Warmup)
+Chain 1: Iteration:  45 / 150 [ 30%]  (Warmup)
+Chain 1: Iteration:  51 / 150 [ 34%]  (Sampling)
+Chain 1: Iteration:  65 / 150 [ 43%]  (Sampling)
+Chain 1: Iteration:  80 / 150 [ 53%]  (Sampling)
+Chain 1: Iteration:  95 / 150 [ 63%]  (Sampling)
+Chain 1: Iteration: 110 / 150 [ 73%]  (Sampling)
+Chain 1: Iteration: 125 / 150 [ 83%]  (Sampling)
+Chain 1: Iteration: 140 / 150 [ 93%]  (Sampling)
+Chain 1: Iteration: 150 / 150 [100%]  (Sampling)
+Chain 1: 
+Chain 1:  Elapsed Time: 26.7624 seconds (Warm-up)
+Chain 1:                33.0573 seconds (Sampling)
+Chain 1:                59.8197 seconds (Total)
+Chain 1: 

@@ -25,9 +25,6 @@ logit = function(x) log(x/(1-x))
 
 inv.logit = function(x) exp(x)/(1+exp(x))
 
-prename_projections = "model_predictions_";
-prename_figures     = "model_figures_";
-prename_parameters  = "model_parameters_";
 todaystr            = format(Sys.Date(), "%d%m%Y");
 direc2save          = paste0("OUT/",todaystr,"/")
 mkdir(direc2save)

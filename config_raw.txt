@@ -1,0 +1,4 @@
+parameter value
+scale 0
+smoothed 0
+numWarmup 150numIterations 500numChains 16valSeed 0odeSolver 0

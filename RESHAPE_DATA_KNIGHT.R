@@ -83,6 +83,32 @@ data_knight_F5_t = data_knight_F5_t[2:dim(data_knight_F5_t)[1],]
 # data_knight_M5_t, day_grid_M5
 # data_knight_F5_t, day_grid_F5 
 
+data_knight_M5_abs = data_knight_M5
+data_knight_F5_abs = data_knight_F5
+
+numeric_cols  = names(data_knight_M5)[sapply(data_knight_M5, is.numeric)]
+data_knight_M5_abs[, numeric_cols] <- lapply(data_knight_M5[, numeric_cols], function(x) ((10^11)*x))#scale to absolute abundance
+numeric_cols  = names(data_knight_F5)[sapply(data_knight_F5, is.numeric)]
+data_knight_F5_abs[, numeric_cols] <- lapply(data_knight_F5[, numeric_cols], function(x) ((10^11)*x))#scale to absolute abundance
+
+abundanceArray_meanSubjects = data_knight_M5_t
+y0_meanSubjects             = as.numeric(unlist(abundanceArray_meanSubjects[1,]))
+y0_meanSubjects[which(y0_meanSubjects==0)] = abs(0.01*rnorm(length(which(y0_meanSubjects==0))))
+
+# PLOT TO CHECK IT OUT?
+
+graphics.off()
+abundanceArray_meanSubjects_longer = abundanceArray_meanSubjects
+abundanceArray_meanSubjects_longer$day = rownames(abundanceArray_meanSubjects_longer)
+abundanceArray_meanSubjects_longer = abundanceArray_meanSubjects_longer %>% pivot_longer( !day, names_to = "taxa", values_to = "abundance")
+abundanceArray_meanSubjects_longer$taxa=as.factor(abundanceArray_meanSubjects_longer$taxa)
+abundanceArray_meanSubjects_longer$day=as.factor(abundanceArray_meanSubjects_longer$day)
+abundanceArray_meanSubjects_longer$abundance=as.numeric(abundanceArray_meanSubjects_longer$abundance)
+library("ggplot2")
+ggplot(abundanceArray_meanSubjects_longer, aes(x = day, y = abundance, color = taxa)) + geom_point() 
+abundanceArray_meanSubjects = abundanceArray_meanSubjects[2:dim(abundanceArray_meanSubjects)[1],]
+
+
 
 
 

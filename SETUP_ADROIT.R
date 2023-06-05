@@ -28,6 +28,6 @@ logit = function(x) log(x/(1-x))
 inv.logit = function(x) exp(x)/(1+exp(x))
 
 todaystr            = format(Sys.Date(), "%d%m%Y");
-direc2save          = paste0("OUT/",todaystr,"/")
+direc2save          = paste0("/scratch/network/bt6725/OUT/",todaystr)
 mkdir(direc2save)
 

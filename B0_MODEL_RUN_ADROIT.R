@@ -1,8 +1,11 @@
 #!/usr/bin/env Rscript
 args = commandArgs(trailingOnly=TRUE)
 # setwd(getwd())
-setwd('/Users/burcutepekule/Library/CloudStorage/Dropbox/criticalwindow/code/R/RStan')
-source("SETUP.R")
+workingDir = '/home/bt6725/RStan/';
+setwd(workingDir)
+print(workingDir)
+source("SETUP_ADROIT.R")
+print(direc2save)
 source('RESHAPE_DATA_KNIGHT.R')
 
 # test if there is at least one argument: if not, return an error
@@ -60,6 +63,7 @@ y0_meanSubjects             = y0_meanSubjects[indexes]
 taxa_array                  = taxa_array[indexes]
 abundanceArray_meanSubjects_longer = abundanceArray_meanSubjects_longer %>% filter(taxa %in% taxa_array)
 
+smoothed = 0
 # maybe smooth before use?
 if(smoothed==1){
   abundanceArray_meanSubjects_keep = abundanceArray_meanSubjects
@@ -72,7 +76,6 @@ if(smoothed==1){
     abundanceArray_meanSubjects[,c]=unlist(smooth_data$fit)
   }
 }
-
 
 data_list = list(
   
@@ -97,7 +100,7 @@ if(scale>0){ # NEGATIVE BINOMIAL LIKELIHOOD
     file.remove("MODELS/MODEL_B0_INT.rds")
   }
   M_model  = stan_model("MODELS/MODEL_B0_INT.stan")
-  T_model  = sampling(M_model,data = data_list,warmup=numWarmup,iter=numIterations,chains=numChains,seed=valSeed,init="random", refresh = 10)
+  T_model  = sampling(M_model,data = data_list,warmup=numWarmup,iter=numIterations,chains=numChains,seed=valSeed,init="random")
 }else{ # NORMAL LIKELIHOOD
   # RECOMPILE EACH TIME
   if(odeSolver==45){
@@ -117,14 +120,14 @@ if(scale>0){ # NEGATIVE BINOMIAL LIKELIHOOD
     print('Compiled the model')
   }
   
-  T_model  = sampling(M_model,data = data_list,warmup=numWarmup,iter=numIterations,chains=numChains,seed=valSeed,init="random", refresh = 10)
+  T_model  = sampling(M_model,data = data_list,warmup=numWarmup,iter=numIterations,chains=numChains,seed=valSeed,init="random")
 }
 
-todaystr    = format(Sys.Date(), "%d%m%Y");
-tstamp      = as.numeric(Sys.time());
-direc2save  = paste0("OUT/",todaystr,"/RDATA")
-mkdir(direc2save)
-save(T_model, file = paste0(direc2save,"/MODEL_SMOOTH_",smoothed,"_ODESOLVER_",odeSolver,"_",round(tstamp),".RData"))
+tstamp  = as.numeric(Sys.time());
+direc2saveRData = paste0(direc2save,"/RDATA")
+mkdir(direc2saveRData)
+paste0(direc2saveRData)
+save(T_model, file = paste0(direc2saveRData,"/MODEL_SMOOTH_",smoothed,"_ODESOLVER_",odeSolver,"_",round(tstamp),".RData"))
 
 
 

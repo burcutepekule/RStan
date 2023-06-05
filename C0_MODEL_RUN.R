@@ -50,6 +50,8 @@ interactionMat_vector_in= as.vector(unlist(estimations_interaction))
 # print(sum(interactionMat_in-interactionMat_check))
 # ##[1] 0
 
+phi_use = 1e-1 # for relative abundances
+
 data_list = list(
   
   numTaxa      = length(taxa_array),
@@ -66,6 +68,8 @@ data_list = list(
   y0 = y0_meanSubjects,
   observations = abundanceArray_meanSubjects,
   p_coating_vector = c(2,5),
+  p_phi            = 1/phi_use,
+  
   
   t0        = 0, #starting time
   t0_data   = days_array[1], #index of first sample
@@ -75,28 +79,37 @@ data_list = list(
 )
 
 # RECOMPILE EACH TIME
-if(file.exists("MODELS/MODEL_A2.rds")){
-  file.remove("MODELS/MODEL_A2.rds")
+if(file.exists("MODELS/MODEL_C0.rds")){
+  file.remove("MODELS/MODEL_C0.rds")
 }
-M_model  = stan_model("MODELS/MODEL_A2.stan")
-T_model  = sampling(M_model,data = data_list,warmup=50,iter=150,chains=1,init="random")
+M_model  = stan_model("MODELS/MODEL_C0.stan")
 
-compartment_names = 'y'
-summaryTable = as.data.frame(summary(T_model,compartment_names)[[1]])
-summaryTable$populationNames = rownames(summaryTable)
-summaryTable$t    = sub(",.*","",sub(".*y\\[", "", summaryTable$populationNames))  # Extract characters after pattern
-summaryTable$taxa = sub("\\].*","",sub(".*,", "", summaryTable$populationNames))  # Extract characters after pattern
-summaryTable_use = summaryTable[c('t','taxa','mean')]
+# sink('C0_RUN.txt')
+T_model  = sampling(M_model,data = data_list,warmup=150,iter=500,chains=8,init="random")
 
-for(tx in 1:length(taxa_array)){
-  summaryTable_use_tx_uncoated = summaryTable_use %>% filter(taxa==tx)
-  summaryTable_use_tx_coated   = summaryTable_use %>% filter(taxa==tx+length(taxa_array))
-  summaryTable_use_tx_total    = summaryTable_use_tx_uncoated$mean+summaryTable_use_tx_coated$mean
-  plot(summaryTable_use_tx_total)
-}
+todaystr    = format(Sys.Date(), "%d%m%Y");
+tstamp      = as.numeric(Sys.time());
+direc2save  = paste0("OUT/",todaystr,"/RDATA")
+mkdir(direc2save)
+save(T_model, file = paste0(direc2save,"/MODEL_C0_",round(tstamp),".RData"))
 
 
-
-
-
+# compartment_names = 'y'
+# summaryTable = as.data.frame(summary(T_model,compartment_names)[[1]])
+# summaryTable$populationNames = rownames(summaryTable)
+# summaryTable$t    = sub(",.*","",sub(".*y\\[", "", summaryTable$populationNames))  # Extract characters after pattern
+# summaryTable$taxa = sub("\\].*","",sub(".*,", "", summaryTable$populationNames))  # Extract characters after pattern
+# summaryTable_use = summaryTable[c('t','taxa','mean')]
+# 
+# for(tx in 1:length(taxa_array)){
+#   summaryTable_use_tx_uncoated = summaryTable_use %>% filter(taxa==tx)
+#   summaryTable_use_tx_coated   = summaryTable_use %>% filter(taxa==tx+length(taxa_array))
+#   summaryTable_use_tx_total    = summaryTable_use_tx_uncoated$mean+summaryTable_use_tx_coated$mean
+#   plot(summaryTable_use_tx_total)
+# }
+# 
+# 
+# 
+# # sink()
+# # closeAllConnections()
 

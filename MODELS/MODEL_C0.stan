@@ -11,29 +11,29 @@ functions {
   }
   
   // Total abundance function
-  real function_total_abundance(real t) {
-    
-    // ////// I am hardcoding the output here for now, but this can an be input as well. 
-    // data_time     = c(0,1,2,3,20,50,180) #days
-    // data_abundance= c(10^3,10^4,10^6,10^8,10^9,10^10,10^10) #rDNA copies/g
-    // df_abundance  = tibble(t = data_time, y = data_abundance)
-    // fit_abundance = nls(y ~ SSlogis(t, Asym, xmid, scal), data = df_abundance)
-    // coeffs_abundance = coef(fit_abundance)
-    // Asym        = coeffs_abundance[[1]]
-    // xmid        = coeffs_abundance[[2]]
-    // scal        = coeffs_abundance[[3]]
-    // t_abundance = seq(0,720)
-    // totalAbundance    = Asym/(1+exp((xmid-t_abundance)/scal));
-    // totalAbundance_df = as.data.frame(cbind(t_abundance,totalAbundance))
-    // colnames(totalAbundance_df)=c('day','total_abundance')
-    
-    real Asym = 10015904335;
-    real xmid = 28.29924;
-    real scal = 3.77713;
-    real totalAbundance;
-    totalAbundance    = Asym/(1+exp((xmid-t)/scal));
-    return(totalAbundance);
-  }
+  // real function_total_abundance(real t) {
+  //   
+  //   // ////// I am hardcoding the output here for now, but this can an be input as well. 
+  //   // data_time     = c(0,1,2,3,20,50,180) #days
+  //   // data_abundance= c(10^3,10^4,10^6,10^8,10^9,10^10,10^10) #rDNA copies/g
+  //   // df_abundance  = tibble(t = data_time, y = data_abundance)
+  //   // fit_abundance = nls(y ~ SSlogis(t, Asym, xmid, scal), data = df_abundance)
+  //   // coeffs_abundance = coef(fit_abundance)
+  //   // Asym        = coeffs_abundance[[1]]
+  //   // xmid        = coeffs_abundance[[2]]
+  //   // scal        = coeffs_abundance[[3]]
+  //   // t_abundance = seq(0,720)
+  //   // totalAbundance    = Asym/(1+exp((xmid-t_abundance)/scal));
+  //   // totalAbundance_df = as.data.frame(cbind(t_abundance,totalAbundance))
+  //   // colnames(totalAbundance_df)=c('day','total_abundance')
+  //   
+  //   real Asym = 10015904335;
+  //   real xmid = 28.29924;
+  //   real scal = 3.77713;
+  //   real totalAbundance;
+  //   totalAbundance    = Asym/(1+exp((xmid-t)/scal));
+  //   return(totalAbundance);
+  // }
   
   // Switch to mixed food - introduction of certain bacterial taxa
   real switch_mixed(real t, int t_mixed) {
@@ -60,6 +60,7 @@ functions {
     }else{
       // not zero of course, need to find an estimate for formula feeding
     }
+    HMO_level = HMO_level/y0_milk; // max 1
     return(HMO_level);
   }
   
@@ -179,8 +180,9 @@ functions {
     level_HMO       = function_HMO(t,binary_breastmilk);
     level_solid     = function_solid(t,t_mixed,t_solid);
     level_mIgA      = function_mIgA(t,binary_breastmilk,level_HMO); 
-    total_abundance = function_total_abundance(t);
-    
+    // total_abundance = function_total_abundance(t);
+    total_abundance = 1; // stan cannot work with 1E1, will try relative
+
     y_uncoated  = y[1:numTaxa];
     y_coated    = y[(numTaxa+1):(2*numTaxa)];
     
@@ -192,11 +194,13 @@ functions {
       
       O2Dependency   = O2Dependency_vector[tx]*level_O2;
       HMODependency  = HMODependency_vector[tx]*level_HMO;
-      solidDependency= solidDependency_vector[tx]*level_solid;
+      solidDependency= (1-solidDependency_vector[tx]*level_solid);
       growthRate     = growthRate_vector[tx];
       
       interactionvectemp = interactionMat[tx,1:numTaxa];
       interactions   = dot_product(interactionvectemp,abundancevectemp);
+      // print(t," ",tx," ",O2Dependency," ",HMODependency," ",solidDependency);
+      // print(t," ",tx," ",(1+O2Dependency+HMODependency-solidDependency));
       growthRate_net = (1+O2Dependency+HMODependency-solidDependency)*growthRate;
       
       // print("tx:",tx)
@@ -241,6 +245,7 @@ data {
   
   // priors
   real p_coating_vector[2];
+  real p_phi;
   
   // Simulation
   int  t0; //starting time
@@ -271,6 +276,7 @@ transformed data {
 
 parameters{
   real<lower=0,upper=1> coating_vector[numTaxa]; // coating parameters
+  real<lower=0> phi[numTaxa]; // dispersion parameters
 }
 
 transformed parameters {
@@ -320,7 +326,7 @@ model {
       uncoated = output_mat[ti,tx];
       coated   = output_mat[ti,tx+numTaxa];
       // print(uncoated+coated)
-      target += normal_lpdf( uncoated+coated | observations[ti,tx],10);
+      target += normal_lpdf( uncoated+coated | observations[ti,tx], phi[tx]);
     }
   }
   

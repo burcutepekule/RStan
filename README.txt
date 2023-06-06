@@ -9,6 +9,8 @@ Two things
 
 To implement both of these, I will move from model version C0 to D0.
 
+Side note, maybe I should focus on writing down the whole model first to focus on what can be estimated where and have a better overview of the parameter space.
+
 Progress 05/06/2023
 ---------------------------------------------------------------------------------------------------
 

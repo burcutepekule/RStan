@@ -17,6 +17,11 @@ saved_data_infant$abundance[saved_data_infant$abundance<0] = 0 #fix negative val
 saved_data_mum$abundance[saved_data_mum$abundance<0] = 0 #fix negative values introduced by loess interpolation
 colnames(saved_data_infant)[4]='relative_abundance'
 colnames(saved_data_mum)[4]='relative_abundance'
+saved_data_infant$relative_abundance=as.numeric(saved_data_infant$relative_abundance)
+
+saved_data_infant_bacteria_only = saved_data_infant %>% filter(!(taxa  %in% c('Valerate','Acetate','Butyrate','Formate','Isobutyrate','Lactate','Isovalerate','Succinate','Mitochondria','pH')))
+saved_data_infant_bacteria_only_agg = aggregate(relative_abundance~subject+day,data=saved_data_infant_bacteria_only,FUN=sum)
+# above gives all around 100- so it is the percentage! 
 
 # CONVERT RELATIVE TO ABSOLUTE ABUNDANCE
 # check https://journals.plos.org/plosbiology/article?id=10.1371/journal.pbio.0050177
@@ -43,7 +48,11 @@ colnames(totalAbundance_df)=c('day','total_abundance')
 saved_data_infant = merge(totalAbundance_df,saved_data_infant,by='day')
 saved_data_infant$total_abundance = as.numeric(saved_data_infant$total_abundance)
 saved_data_infant$relative_abundance = as.numeric(saved_data_infant$relative_abundance)
-saved_data_infant = saved_data_infant %>% dplyr::rowwise() %>% dplyr::mutate(abundance=total_abundance*relative_abundance)
+if(useTotalAbundance==1){
+  saved_data_infant = saved_data_infant %>% dplyr::rowwise() %>% dplyr::mutate(abundance=0.01*total_abundance*relative_abundance)#since it's percentage
+}else{
+  saved_data_infant = saved_data_infant %>% dplyr::rowwise() %>% dplyr::mutate(abundance=0.01*relative_abundance) #since it's percentage
+}
 saved_data_infant = saved_data_infant[c('subject','day','taxa','abundance')]
 
 families = c('Bifidobacteriaceae','Enterobacteriaceae','Lachnospiraceae','Streptococcaceae',
@@ -92,7 +101,11 @@ saved_data_mum$day=0
 saved_data_mum = merge(totalAbundance_df,saved_data_mum,by='day')
 saved_data_mum$total_abundance = as.numeric(saved_data_mum$total_abundance)
 saved_data_mum$relative_abundance = as.numeric(saved_data_mum$relative_abundance)
-saved_data_mum = saved_data_mum %>% dplyr::rowwise() %>% dplyr::mutate(abundance=total_abundance*relative_abundance)
+if(useTotalAbundance==1){
+  saved_data_mum = saved_data_mum %>% dplyr::rowwise() %>% dplyr::mutate(abundance=0.01*total_abundance*relative_abundance)#since it's percentage
+}else{
+  saved_data_mum = saved_data_mum %>% dplyr::rowwise() %>% dplyr::mutate(abundance=0.01*relative_abundance) #since it's percentage
+}
 saved_data_mum = saved_data_mum[c('subject','day','taxa','abundance')]
 
 families = c('Bifidobacteriaceae','Enterobacteriaceae','Lachnospiraceae','Streptococcaceae',

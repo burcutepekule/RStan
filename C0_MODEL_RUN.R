@@ -4,6 +4,7 @@ rm(list=ls())
 setwd('/Users/burcutepekule/Library/CloudStorage/Dropbox/criticalwindow/code/R/RStan')
 source("SETUP.R")
 source("PREPARE_MILK.R")
+useTotalAbundance=0 #if zero, relative abundance is returned
 source("RESHAPE_DATA_YAGAHI.R")
 ##### OUTPUTS:
 #### saved_data : df of all data
@@ -19,12 +20,12 @@ source("RESHAPE_DATA_YAGAHI.R")
 #### abundanceArray_meanSubjects : 2D array of abundances per taxa per time point (avgd over subjects)
 #### totalAbundance_df : increase in total abundance over time - this is needed to be used as the denominator of the interaction parameters
 
-abundanceArray_allSubjects
-abundanceArray_allSubjects_mum
-saved_data
-saved_data_milkandsolid
-saved_data_solid
-abundanceArray_meanSubjects
+# abundanceArray_allSubjects
+# abundanceArray_allSubjects_mum
+# saved_data
+# saved_data_milkandsolid
+# saved_data_solid
+# abundanceArray_meanSubjects
 
 ss_coating  = 0.36
 coated_y0   = ss_coating*abundanceArray_allSubjects_mum
@@ -50,7 +51,16 @@ interactionMat_vector_in= as.vector(unlist(estimations_interaction))
 # print(sum(interactionMat_in-interactionMat_check))
 # ##[1] 0
 
-phi_use = 1e-1 # for relative abundances
+######### FITTING THIS PART ONLY MAKES SENSE FOR THE FIRST MONTH, WHERE THERE IS NO RESPONSE.
+######### JUST TO CHECK WHETHER SUCH FITTING IS POSSIBLE
+
+days_array = days_array[days_array<=30]
+abundanceArray_meanSubjects = abundanceArray_meanSubjects[1:length(days_array),]
+
+index_check_1 = which(days_array==10) #coating ratio checkpoint
+index_check_2 = which(days_array==30) #coating ratio checkpoint
+
+phi_use = 1e0 # for relative abundances
 
 data_list = list(
   
@@ -58,6 +68,8 @@ data_list = list(
   numTimeSteps = length(days_array),
   t_mixed      = round(mean(unlist(saved_data_milkandsolid$day))),
   t_solid      = round(mean(unlist(saved_data_solid$day))),
+  icheck_1     = index_check_1,
+  icheck_2     = index_check_2,
   binary_breastmilk     = 1, # all breastfed
   O2Dependency_vector   = c(0,1,0,1,0,1,1,0,0,0),
   HMODependency_vector  = c(1,0,0,0,1,0,0,0,0,0),
@@ -65,9 +77,9 @@ data_list = list(
   growthRate_vector     = growthRate_vector_in,
   interactionMat_vector = interactionMat_vector_in,
 
-  y0 = y0_meanSubjects,
+  y0           = y0_meanSubjects,
   observations = abundanceArray_meanSubjects,
-  p_coating_vector = c(2,5),
+  p_coating_vector = c(2,2), # beta distribution
   p_phi            = 1/phi_use,
   
   
@@ -85,14 +97,16 @@ if(file.exists("MODELS/MODEL_C0.rds")){
 M_model  = stan_model("MODELS/MODEL_C0.stan")
 
 # sink('C0_RUN.txt')
-T_model  = sampling(M_model,data = data_list,warmup=150,iter=500,chains=8,init="random")
 
+T_model     = sampling(M_model,data = data_list,warmup=150,iter=500,chains=8,init="random",cores=mc.cores,refresh=10)
 todaystr    = format(Sys.Date(), "%d%m%Y");
 tstamp      = as.numeric(Sys.time());
 direc2save  = paste0("OUT/",todaystr,"/RDATA")
 mkdir(direc2save)
 save(T_model, file = paste0(direc2save,"/MODEL_C0_",round(tstamp),".RData"))
 
+# sink()
+# closeAllConnections()
 
 # compartment_names = 'y'
 # summaryTable = as.data.frame(summary(T_model,compartment_names)[[1]])
@@ -110,6 +124,4 @@ save(T_model, file = paste0(direc2save,"/MODEL_C0_",round(tstamp),".RData"))
 # 
 # 
 # 
-# # sink()
-# # closeAllConnections()
 

@@ -1,3 +1,14 @@
+Progress 06/06/2023
+---------------------------------------------------------------------------------------------------
+
+Two things
+
+1) Cannot estimate coating parameters for more than 30 days - so even if I do this partial fitting, data should end at day 30
+
+2) 02 and HMO dependency will have to have a taxa dependent modifier, othwerwise the abundance becomes dependent only on the coating ratio, which does not make sense at all.
+
+To implement both of these, I will move from model version C0 to D0.
+
 Progress 05/06/2023
 ---------------------------------------------------------------------------------------------------
 

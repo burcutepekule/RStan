@@ -1,3 +1,13 @@
+Progress 07/06/2023
+---------------------------------------------------------------------------------------------------
+
+Ok so I will NEED a metric of total abundance, since it related to the aggressiveness of the IgA response. Since the algorithm cannot work with numbers like 10ˆ11, why not normalize that to 1 instead - and assume 1 is the number of max bacteria in the lumen?
+
+In terms of sampling -> this is numerically constrained by the number of DCs. Given the DC capacity, if the amount sampled is below, leave it as it is. If not, truncate. Do not give priority for now.
+(Priority would be, say you have the capacity of 5, and you have 1 1 3 - sure, you sample them all. But if you have 3 3 9, do you sample 0 0 5, or do you sample 1 1 3?)
+
+
+
 Progress 06/06/2023
 ---------------------------------------------------------------------------------------------------
 

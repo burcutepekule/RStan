@@ -60,7 +60,7 @@ interactionMat_vector_in= as.vector(unlist(estimations_interaction))
 ######### FITTING THIS PART ONLY MAKES SENSE FOR THE FIRST MONTH, WHERE THERE IS NO RESPONSE.
 ######### JUST TO CHECK WHETHER SUCH FITTING IS POSSIBLE
 
-days_array = c(0,days_array) # add 0 since you also added mum's microbiome as y0
+days_array = c(1,days_array) # add 0 since you also added mum's microbiome as y0
 days_array = days_array[days_array<=30]
 abundanceArray_meanSubjects = abundanceArray_meanSubjects[1:length(days_array),]
 days_array_pred = days_array

@@ -39,6 +39,12 @@ y0_allSubjects = cbind(uncoated_y0,coated_y0)
 y0_meanSubjects= colMeans(y0_allSubjects)
 
 
+# Maybe insert y0 at time point 0?
+y0_allSubjectsBoth  = cbind(uncoated_y0+coated_y0)
+y0_meanSubjectsBoth = colMeans(y0_allSubjectsBoth)
+abundanceArray_meanSubjects = rbind(y0_meanSubjectsBoth,abundanceArray_meanSubjects)
+
+
 # read these from saved tables
 # use 1685924896 in /Users/burcutepekule/Library/CloudStorage/Dropbox/criticalwindow/code/R/RStan/OUT/04062023/RDATA as demo
 estimations_growth      = read_excel('/Users/burcutepekule/Library/CloudStorage/Dropbox/criticalwindow/code/R/RStan/OUT/04062023/RDATA/GROWTH_1685924896.xlsx', sheet='mean')
@@ -54,6 +60,7 @@ interactionMat_vector_in= as.vector(unlist(estimations_interaction))
 ######### FITTING THIS PART ONLY MAKES SENSE FOR THE FIRST MONTH, WHERE THERE IS NO RESPONSE.
 ######### JUST TO CHECK WHETHER SUCH FITTING IS POSSIBLE
 
+days_array = c(0,days_array) # add 0 since you also added mum's microbiome as y0
 days_array = days_array[days_array<=30]
 abundanceArray_meanSubjects = abundanceArray_meanSubjects[1:length(days_array),]
 days_array_pred = seq(0,30,0.1)
@@ -61,7 +68,7 @@ days_array_pred = seq(0,30,0.1)
 index_check_1 = which(days_array==10) #coating ratio checkpoint
 index_check_2 = which(days_array==30) #coating ratio checkpoint
 
-phi_use = 1e0 # for relative abundances
+phi_use = 1e-1 # for relative abundances
 
 data_list = list(
   

@@ -9,11 +9,6 @@ source("RESHAPE_DATA_YAGAHI_RAW.R")
 ##### OUTPUTS:
 # abundanceArray_meanSubjects
 # time_grid_prediction
-taxa_array      = families
-ss_coating      = 0.36 #adult coating ratio
-coated_y0       = ss_coating*abundanceArray_meanSubjects[1,]
-uncoated_y0     = (1-ss_coating)*abundanceArray_meanSubjects[1,]
-y0_meanSubjects = cbind(uncoated_y0,coated_y0)
 
 # read these from saved tables
 # use 1685924896 in /Users/burcutepekule/Library/CloudStorage/Dropbox/criticalwindow/code/R/RStan/OUT/04062023/RDATA as demo
@@ -30,9 +25,17 @@ interactionMat_vector_in= as.vector(unlist(estimations_interaction))
 ######### FITTING THIS PART ONLY MAKES SENSE FOR THE FIRST MONTH, WHERE THERE IS NO RESPONSE.
 ######### JUST TO CHECK WHETHER SUCH FITTING IS POSSIBLE
 
+time_grid_prediction        = time_grid_prediction[time_grid_prediction<=30]
 days_array                  = time_grid_prediction[2:length(time_grid_prediction)] 
-abundanceArray_meanSubjects = abundanceArray_meanSubjects[2:length(days_array)+1,]
+abundanceArray_meanSubjects = abundanceArray_meanSubjects %>% filter(day %in% days_array)
+abundanceArray_meanSubjects = abundanceArray_meanSubjects[families]
 days_array_pred             = days_array
+
+ss_coating      = 0.36 #adult coating ratio
+coated_y0       = ss_coating*abundanceArray_meanSubjects[1,]
+uncoated_y0     = (1-ss_coating)*abundanceArray_meanSubjects[1,]
+y0_meanSubjects = unlist(cbind(uncoated_y0,coated_y0))
+taxa_array      = families
 
 index_check_1 = which(days_array==10) #coating ratio checkpoint
 index_check_2 = which(days_array==30) #coating ratio checkpoint

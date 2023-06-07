@@ -30,5 +30,6 @@ saved_data_mean_smooth_wide = na.omit(saved_data_mean_smooth_wide)
 
 time_grid_prediction        = seq(0,719,1)
 saved_data_mean_smooth_wide = saved_data_mean_smooth_wide %>% filter(day %in% time_grid_prediction)
-abundanceArray_meanSubjects = saved_data_mean_smooth_wide[families]
+abundanceArray_meanSubjects = saved_data_mean_smooth_wide
+# abundanceArray_meanSubjects = saved_data_mean_smooth_wide[families]
 

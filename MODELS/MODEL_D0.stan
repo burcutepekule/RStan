@@ -194,9 +194,9 @@ functions {
       
       for(tx in 1:numTaxa){
         
-        O2Dependency   = O2Dependency_vector[tx]*level_O2;
-        HMODependency  = HMODependency_vector[tx]*level_HMO;
-        solidDependency= (1-solidDependency_vector[tx]*level_solid);
+        O2Dependency   = O2Dependency_vector[tx]*level_O2*theta[1*numTaxa+tx];
+        HMODependency  = HMODependency_vector[tx]*level_HMO*theta[2*numTaxa+tx];
+        solidDependency= (1-solidDependency_vector[tx]*level_solid)*theta[3*numTaxa+tx];
         growthRate     = growthRate_vector[tx];
         
         interactionvectemp = interactionMat[tx,1:numTaxa];
@@ -246,6 +246,9 @@ data {
   
   // priors
   real p_coating_vector[2];
+  real p_O2_vector[2];
+  real p_HMO_vector[2];
+  real p_solid_vector[2];
   real p_phi;
   
   // Simulation
@@ -279,15 +282,22 @@ transformed data {
 
 parameters{
   real<lower=0,upper=1> coating_vector[numTaxa]; // coating parameters
+  real<lower=0,upper=1> O2_vector[numTaxa]; // coating parameters
+  real<lower=0,upper=1> HMO_vector[numTaxa]; // coating parameters
+  real<lower=0,upper=1> solid_vector[numTaxa]; // coating parameters
   real<lower=0> phi[numTaxa]; // dispersion parameters
 }
 
 transformed parameters {
-  real theta[numTaxa]; // vector of parameterss
+  real theta[4*numTaxa]; // vector of parameterss
   real y[numTimeSteps,2*numTaxa]; // raw ODE output 
   real output_mat[numTimeSteps,2*numTaxa];
   
-  theta = coating_vector;
+  theta[(0*numTaxa+1):(1*numTaxa)] = coating_vector;
+  theta[(1*numTaxa+1):(2*numTaxa)] = O2_vector;
+  theta[(2*numTaxa+1):(3*numTaxa)] = HMO_vector;
+  theta[(3*numTaxa+1):(4*numTaxa)] = solid_vector;
+  
   // print("theta: ",theta)
   
   // run ODE solver
@@ -322,6 +332,9 @@ model {
   
   // priors
   coating_vector ~ beta(p_coating_vector[1],p_coating_vector[2]);
+  O2_vector ~ beta(p_O2_vector[1],p_O2_vector[2]);
+  HMO_vector ~ beta(p_HMO_vector[1],p_HMO_vector[2]);
+  solid_vector ~ beta(p_solid_vector[1],p_solid_vector[2]);
   
   // likelihood - first for total abundances
   for(ti in 1:numTimeSteps){

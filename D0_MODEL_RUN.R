@@ -63,7 +63,7 @@ interactionMat_vector_in= as.vector(unlist(estimations_interaction))
 days_array = c(0,days_array) # add 0 since you also added mum's microbiome as y0
 days_array = days_array[days_array<=30]
 abundanceArray_meanSubjects = abundanceArray_meanSubjects[1:length(days_array),]
-days_array_pred = seq(0,30,0.1)
+days_array_pred = days_array
 
 index_check_1 = which(days_array==10) #coating ratio checkpoint
 index_check_2 = which(days_array==30) #coating ratio checkpoint
@@ -73,7 +73,7 @@ phi_use = 1e-1 # for relative abundances
 data_list = list(
   
   numTaxa      = length(taxa_array),
-  numTimeSteps = length(days_array_pred),
+  numTimeSteps = length(days_array),
   t_mixed      = round(mean(unlist(saved_data_milkandsolid$day))),
   t_solid      = round(mean(unlist(saved_data_solid$day))),
   icheck_1     = index_check_1,
@@ -97,7 +97,7 @@ data_list = list(
   
   t0        = 0, #starting time
   t0_data   = days_array[1], #index of first sample
-  t_sim_end = max(days_array_pred), #total simulation time
+  t_sim_end = max(days_array), #total simulation time
   t_data    = days_array, #time bins of data
   ts_pred   = days_array_pred  #time bins of prediction (not doing prediction currently)
 )

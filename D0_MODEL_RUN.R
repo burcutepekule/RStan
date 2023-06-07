@@ -73,7 +73,7 @@ phi_use = 1e-1 # for relative abundances
 data_list = list(
   
   numTaxa      = length(taxa_array),
-  numTimeSteps = length(days_array),
+  numTimeSteps = length(days_array_pred),
   t_mixed      = round(mean(unlist(saved_data_milkandsolid$day))),
   t_solid      = round(mean(unlist(saved_data_solid$day))),
   icheck_1     = index_check_1,
@@ -110,7 +110,7 @@ M_model  = stan_model("MODELS/MODEL_D0.stan")
 
 # sink('C0_RUN.txt')
 
-T_model     = sampling(M_model,data = data_list,warmup=150,iter=500,chains=8,init="random",cores=mc.cores,refresh=10)
+T_model     = sampling(M_model,data = data_list,warmup=250,iter=1000,chains=8,init="random",cores=mc.cores,refresh=10)
 todaystr    = format(Sys.Date(), "%d%m%Y");
 tstamp      = as.numeric(Sys.time());
 direc2save  = paste0("OUT/",todaystr,"/RDATA")

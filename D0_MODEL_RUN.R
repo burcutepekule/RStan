@@ -40,10 +40,9 @@ y0_meanSubjects= colMeans(y0_allSubjects)
 
 
 # Maybe insert y0 at time point 0?
-y0_allSubjectsBoth  = cbind(uncoated_y0+coated_y0)
-y0_meanSubjectsBoth = colMeans(y0_allSubjectsBoth)
+y0_allSubjectsBoth          = cbind(uncoated_y0+coated_y0)
+y0_meanSubjectsBoth         = colMeans(y0_allSubjectsBoth)
 abundanceArray_meanSubjects = rbind(y0_meanSubjectsBoth,abundanceArray_meanSubjects)
-
 
 # read these from saved tables
 # use 1685924896 in /Users/burcutepekule/Library/CloudStorage/Dropbox/criticalwindow/code/R/RStan/OUT/04062023/RDATA as demo
@@ -61,9 +60,29 @@ interactionMat_vector_in= as.vector(unlist(estimations_interaction))
 ######### JUST TO CHECK WHETHER SUCH FITTING IS POSSIBLE
 
 days_array = c(1,days_array) # add 0 since you also added mum's microbiome as y0
-days_array = days_array[days_array<=30]
 abundanceArray_meanSubjects = abundanceArray_meanSubjects[1:length(days_array),]
-days_array_pred = days_array
+days_array_pred = seq(1,max(days_array),0.1)
+
+# maybe smooth before use because you jump from day 1 to day 5
+abundanceArray_meanSubjects_keep = abundanceArray_meanSubjects
+abundanceArray_meanSubjects_new  = matrix(0,nrow=length(days_array_pred),ncol=dim(abundanceArray_meanSubjects)[2])
+for (c in 1:dim(abundanceArray_meanSubjects)[2]){
+  tempcolumn  = unlist(abundanceArray_meanSubjects_keep[,c])
+  dayvector   = days_array
+  taxa_model  = loess(tempcolumn ~ days_array,span=7)
+  smooth_data = predict(taxa_model,days_array_pred)
+  # plot(smooth_data$fit)
+  abundanceArray_meanSubjects_new[,c]=smooth_data
+}
+
+graphics.off()
+ind=1
+plot(days_array,unlist(abundanceArray_meanSubjects_keep[,ind]),col='blue')
+lines(days_array_pred, abundanceArray_meanSubjects_new[,ind], col='red', lwd=2)
+print(taxa_array[ind])
+
+
+
 
 index_check_1 = which(days_array==10) #coating ratio checkpoint
 index_check_2 = which(days_array==30) #coating ratio checkpoint

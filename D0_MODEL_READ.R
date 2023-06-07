@@ -39,11 +39,18 @@ uncoated_y0 = (1-ss_coating)*abundanceArray_allSubjects_mum_reshaped
 coated_y0   = ss_coating*abundanceArray_allSubjects_mum_reshaped
 y0_allSubjects = cbind(uncoated_y0,coated_y0)
 y0_meanSubjects= colMeans(y0_allSubjects)
+
+
+# Maybe insert y0 at time point 0?
+y0_allSubjectsBoth  = cbind(uncoated_y0+coated_y0)
+y0_meanSubjectsBoth = colMeans(y0_allSubjectsBoth)
+abundanceArray_meanSubjects = rbind(y0_meanSubjectsBoth,abundanceArray_meanSubjects)
+
 taxa_array     = unique(saved_data_infant$taxa)
 
 
-pathModelOutput='/Users/burcutepekule/Library/CloudStorage/Dropbox/criticalwindow/code/R/RStan/OUT/06062023/RDATA';
-fileNamePick  = paste0(pathModelOutput,"/MODEL_D0_1686107144.RData")
+pathModelOutput='/Users/burcutepekule/Library/CloudStorage/Dropbox/criticalwindow/code/R/RStan/OUT/07062023/RDATA';
+fileNamePick  = paste0(pathModelOutput,"/MODEL_D0_1686112768.RData")
 #################################################
 
 ### load the model object - clean up afterwards
@@ -75,7 +82,7 @@ summaryTable_use$`2.5%` = as.numeric(summaryTable_use$`2.5%`)
 summaryTable_use$`50%` = as.numeric(summaryTable_use$`50%`)
 summaryTable_use$taxa = paste0('y_',summaryTable_use$taxa)
 # coated uncoated labelling
-# taxa_array = c(paste0(taxa_array,"_uncoated"),paste0(taxa_array,"_coated"))
+# taxa_array = c(paste0(taxa_array,"_uncoated"), paste0(taxa_array,"_coated"))
 # summaryTable_use = summaryTable_use %>% rowwise() %>% mutate(taxa = taxa_array[as.numeric(sub(",.*","",sub(".*\\_", "", taxa)))])
 summaryTable_use = summaryTable_use %>% rowwise() %>% mutate(taxa_idx = as.numeric(sub(",.*","",sub(".*\\_", "", taxa))))
 summaryTable_use = summaryTable_use %>% rowwise() %>% mutate(taxa_idx_name = (taxa_idx-1) %% length(taxa_array) + 1)
@@ -105,7 +112,7 @@ ggplot() +
 # ggplot(summaryTable_use, aes(x = t, y = mean, color = taxa)) + geom_point()
 
 # Save the interaction matricies to compare
-abundanceArray_meanSubjects
+# abundanceArray_meanSubjects
 
 
 

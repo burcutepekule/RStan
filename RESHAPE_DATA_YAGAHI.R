@@ -6,6 +6,8 @@ saved_data              = readRDS('YAGAHI_DATA/save_data_all.rds')
 saved_data_milkandsolid = readRDS('YAGAHI_DATA/save_data_all_milkandsolid.rds')
 saved_data_solid        = readRDS('YAGAHI_DATA/save_data_all_solid.rds')
 
+saved_data_B = saved_data %>% filter(subject=='B')
+
 # REMOVE SUBJECT K -> DON'T KNOW WHEN TRANSITION TO SOLID FOOD HAPPENED
 saved_data              = saved_data %>% filter(subject!='K')
 saved_data_milkandsolid = saved_data_milkandsolid %>% filter(Subject!='K')

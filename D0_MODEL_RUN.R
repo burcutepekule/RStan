@@ -5,44 +5,15 @@ setwd('/Users/burcutepekule/Library/CloudStorage/Dropbox/criticalwindow/code/R/R
 source("SETUP.R")
 source("PREPARE_MILK.R")
 useTotalAbundance=0 #if zero, relative abundance is returned
-source("RESHAPE_DATA_YAGAHI.R")
+source("RESHAPE_DATA_YAGAHI_RAW.R")
 ##### OUTPUTS:
-#### saved_data : df of all data
-#### saved_data_milkandsolid : df keeping the day of transition to mixed feeding
-#### saved_data_solid : df keeping the day of transition to solid feeding
-#### abundanceArray_allSubjects : 3D array of abundances per subject per taxa per time point
-#### abundanceArray_allSubjects_mum : 3D array of abundances per subject's mum at sampled time point
-#### abundanceArray_allSubjects[days,subject,taxa]
-#### abundanceArray_allSubjects_mum[days,subject,taxa]
-#### taxa_array : array of taxa used
-#### days_array : array of time points (days) used
-#### subjects_array : array of subjects used
-#### abundanceArray_meanSubjects : 2D array of abundances per taxa per time point (avgd over subjects)
-#### totalAbundance_df : increase in total abundance over time - this is needed to be used as the denominator of the interaction parameters
-
-# abundanceArray_allSubjects
-# abundanceArray_allSubjects_mum
-# saved_data
-# saved_data_milkandsolid
-# saved_data_solid
 # abundanceArray_meanSubjects
-
-ss_coating  = 0.36
-coated_y0   = ss_coating*abundanceArray_allSubjects_mum
-uncoated_y0 = (1-ss_coating)*abundanceArray_allSubjects_mum
-abundanceArray_allSubjects_mum_reshaped = array_reshape(abundanceArray_allSubjects_mum, c(length(subjects_array), length(taxa_array)))
-colnames(abundanceArray_allSubjects_mum_reshaped) = taxa_array
-rownames(abundanceArray_allSubjects_mum_reshaped) = subjects_array
-uncoated_y0 = (1-ss_coating)*abundanceArray_allSubjects_mum_reshaped
-coated_y0   = ss_coating*abundanceArray_allSubjects_mum_reshaped
-y0_allSubjects = cbind(uncoated_y0,coated_y0)
-y0_meanSubjects= colMeans(y0_allSubjects)
-
-
-# Maybe insert y0 at time point 0?
-y0_allSubjectsBoth          = cbind(uncoated_y0+coated_y0)
-y0_meanSubjectsBoth         = colMeans(y0_allSubjectsBoth)
-abundanceArray_meanSubjects = rbind(y0_meanSubjectsBoth,abundanceArray_meanSubjects)
+# time_grid_prediction
+taxa_array      = families
+ss_coating      = 0.36 #adult coating ratio
+coated_y0       = ss_coating*abundanceArray_meanSubjects[1,]
+uncoated_y0     = (1-ss_coating)*abundanceArray_meanSubjects[1,]
+y0_meanSubjects = cbind(uncoated_y0,coated_y0)
 
 # read these from saved tables
 # use 1685924896 in /Users/burcutepekule/Library/CloudStorage/Dropbox/criticalwindow/code/R/RStan/OUT/04062023/RDATA as demo
@@ -59,30 +30,9 @@ interactionMat_vector_in= as.vector(unlist(estimations_interaction))
 ######### FITTING THIS PART ONLY MAKES SENSE FOR THE FIRST MONTH, WHERE THERE IS NO RESPONSE.
 ######### JUST TO CHECK WHETHER SUCH FITTING IS POSSIBLE
 
-days_array = c(1,days_array) # add 0 since you also added mum's microbiome as y0
-abundanceArray_meanSubjects = abundanceArray_meanSubjects[1:length(days_array),]
-days_array_pred = seq(1,max(days_array),0.1)
-
-# maybe smooth before use because you jump from day 1 to day 5
-abundanceArray_meanSubjects_keep = abundanceArray_meanSubjects
-abundanceArray_meanSubjects_new  = matrix(0,nrow=length(days_array_pred),ncol=dim(abundanceArray_meanSubjects)[2])
-for (c in 1:dim(abundanceArray_meanSubjects)[2]){
-  tempcolumn  = unlist(abundanceArray_meanSubjects_keep[,c])
-  dayvector   = days_array
-  taxa_model  = loess(tempcolumn ~ days_array,span=7)
-  smooth_data = predict(taxa_model,days_array_pred)
-  # plot(smooth_data$fit)
-  abundanceArray_meanSubjects_new[,c]=smooth_data
-}
-
-graphics.off()
-ind=1
-plot(days_array,unlist(abundanceArray_meanSubjects_keep[,ind]),col='blue')
-lines(days_array_pred, abundanceArray_meanSubjects_new[,ind], col='red', lwd=2)
-print(taxa_array[ind])
-
-
-
+days_array                  = time_grid_prediction[2:length(time_grid_prediction)] 
+abundanceArray_meanSubjects = abundanceArray_meanSubjects[2:length(days_array)+1,]
+days_array_pred             = days_array
 
 index_check_1 = which(days_array==10) #coating ratio checkpoint
 index_check_2 = which(days_array==30) #coating ratio checkpoint

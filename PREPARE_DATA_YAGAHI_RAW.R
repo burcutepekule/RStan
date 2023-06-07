@@ -189,5 +189,9 @@ for(taxonomy_pick in taxonomy_use){
 colnames(keepAllSmooth)=taxonomy_use
 keepAllSmooth=as.data.frame(keepAllSmooth)
 
+keepAllSmooth$day = day_grid_prediction
+keepAllSmooth = keepAllSmooth %>% pivot_longer(!day, names_to = "taxa", values_to = "abundance")
+
+
 saveRDS(keepAllSmooth,'YAGAHI_DATA/save_data_all_MEAN_SMOOTH.rds')
 saveRDS(day_grid_prediction,'YAGAHI_DATA/day_grid_prediction.rds')

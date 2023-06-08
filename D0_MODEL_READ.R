@@ -5,52 +5,40 @@ setwd('/Users/burcutepekule/Library/CloudStorage/Dropbox/criticalwindow/code/R/R
 source("SETUP.R")
 source("PREPARE_MILK.R")
 useTotalAbundance=0 #if zero, relative abundance is returned
-source("RESHAPE_DATA_YAGAHI.R")
+source("RESHAPE_DATA_YAGAHI_RAW.R")
 ##### OUTPUTS:
-#### saved_data : df of all data
-#### saved_data_milkandsolid : df keeping the day of transition to mixed feeding
-#### saved_data_solid : df keeping the day of transition to solid feeding
-#### abundanceArray_allSubjects : 3D array of abundances per subject per taxa per time point
-#### abundanceArray_allSubjects_mum : 3D array of abundances per subject's mum at sampled time point
-#### abundanceArray_allSubjects[days,subject,taxa]
-#### abundanceArray_allSubjects_mum[days,subject,taxa]
-#### taxa_array : array of taxa used
-#### days_array : array of time points (days) used
-#### subjects_array : array of subjects used
-#### abundanceArray_meanSubjects : 2D array of abundances per taxa per time point (avgd over subjects)
-#### totalAbundance_df : increase in total abundance over time - this is needed to be used as the denominator of the interaction parameters
-
-# abundanceArray_allSubjects
-# abundanceArray_allSubjects_mum
-# saved_data
-# saved_data_milkandsolid
-# saved_data_solid
 # abundanceArray_meanSubjects
+# time_grid_prediction
 
+# read these from saved tables
+# use 1685924896 in /Users/burcutepekule/Library/CloudStorage/Dropbox/criticalwindow/code/R/RStan/OUT/04062023/RDATA as demo
+estimations_growth      = read_excel('/Users/burcutepekule/Library/CloudStorage/Dropbox/criticalwindow/code/R/RStan/OUT/04062023/RDATA/GROWTH_1685924896.xlsx', sheet='mean')
+estimations_interaction = read_excel('/Users/burcutepekule/Library/CloudStorage/Dropbox/criticalwindow/code/R/RStan/OUT/04062023/RDATA/INTERACTIONS_1685924896.xlsx', sheet='mean')
+growthRate_vector_in    = unlist(estimations_growth)
+interactionMat_vector_in= as.vector(unlist(estimations_interaction))
 
+#### sanity check
+# interactionMat_check = matrix(interactionMat_vector_in, nrow = length(taxa_array), byrow = length(taxa_array)) #convert array to matrix
+# print(sum(interactionMat_in-interactionMat_check))
+# ##[1] 0
 
-ss_coating  = 0.36
-coated_y0   = ss_coating*abundanceArray_allSubjects_mum
-uncoated_y0 = (1-ss_coating)*abundanceArray_allSubjects_mum
-abundanceArray_allSubjects_mum_reshaped = array_reshape(abundanceArray_allSubjects_mum, c(length(subjects_array), length(taxa_array)))
-colnames(abundanceArray_allSubjects_mum_reshaped) = taxa_array
-rownames(abundanceArray_allSubjects_mum_reshaped) = subjects_array
-uncoated_y0 = (1-ss_coating)*abundanceArray_allSubjects_mum_reshaped
-coated_y0   = ss_coating*abundanceArray_allSubjects_mum_reshaped
-y0_allSubjects = cbind(uncoated_y0,coated_y0)
-y0_meanSubjects= colMeans(y0_allSubjects)
+######### FITTING THIS PART ONLY MAKES SENSE FOR THE FIRST MONTH, WHERE THERE IS NO RESPONSE.
+######### JUST TO CHECK WHETHER SUCH FITTING IS POSSIBLE
 
+time_grid_prediction        = time_grid_prediction[time_grid_prediction<=30]
+days_array                  = time_grid_prediction[2:length(time_grid_prediction)] 
+abundanceArray_meanSubjects = abundanceArray_meanSubjects %>% filter(day %in% days_array)
+abundanceArray_meanSubjects = abundanceArray_meanSubjects[families]
+days_array_pred             = days_array
 
-# Maybe insert y0 at time point 0?
-y0_allSubjectsBoth  = cbind(uncoated_y0+coated_y0)
-y0_meanSubjectsBoth = colMeans(y0_allSubjectsBoth)
-abundanceArray_meanSubjects = rbind(y0_meanSubjectsBoth,abundanceArray_meanSubjects)
-
-taxa_array     = unique(saved_data_infant$taxa)
-
+ss_coating      = 0.36 #adult coating ratio
+coated_y0       = ss_coating*abundanceArray_meanSubjects[1,]
+uncoated_y0     = (1-ss_coating)*abundanceArray_meanSubjects[1,]
+y0_meanSubjects = unlist(cbind(uncoated_y0,coated_y0))
+taxa_array      = families
 
 pathModelOutput='/Users/burcutepekule/Library/CloudStorage/Dropbox/criticalwindow/code/R/RStan/OUT/07062023/RDATA';
-fileNamePick  = paste0(pathModelOutput,"/MODEL_D0_1686112768.RData")
+fileNamePick  = paste0(pathModelOutput,"/MODEL_D0_1686172623.RData")
 #################################################
 
 ### load the model object - clean up afterwards
@@ -82,7 +70,7 @@ summaryTable_use$`2.5%` = as.numeric(summaryTable_use$`2.5%`)
 summaryTable_use$`50%` = as.numeric(summaryTable_use$`50%`)
 summaryTable_use$taxa = paste0('y_',summaryTable_use$taxa)
 # coated uncoated labelling
-# taxa_array = c(paste0(taxa_array,"_uncoated"), paste0(taxa_array,"_coated"))
+# taxa_array = c(paste0(taxa_array,"_uncoated"),paste0(taxa_array,"_coated"))
 # summaryTable_use = summaryTable_use %>% rowwise() %>% mutate(taxa = taxa_array[as.numeric(sub(",.*","",sub(".*\\_", "", taxa)))])
 summaryTable_use = summaryTable_use %>% rowwise() %>% mutate(taxa_idx = as.numeric(sub(",.*","",sub(".*\\_", "", taxa))))
 summaryTable_use = summaryTable_use %>% rowwise() %>% mutate(taxa_idx_name = (taxa_idx-1) %% length(taxa_array) + 1)
@@ -112,7 +100,7 @@ ggplot() +
 # ggplot(summaryTable_use, aes(x = t, y = mean, color = taxa)) + geom_point()
 
 # Save the interaction matricies to compare
-# abundanceArray_meanSubjects
+abundanceArray_meanSubjects
 
 
 

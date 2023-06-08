@@ -12,217 +12,393 @@ functions {
   
   // Total abundance function
   real function_total_abundance(real t) {
-
-    ////// I am hardcoding the output here for now, but this can an be input as well.
-    data_time     = c(0,1,2,3,20,50,180) #days
-    data_abundance= c(10^3,10^4,10^6,10^8,10^9,10^10,10^10) #rDNA copies/g
-    df_abundance  = tibble(t = data_time, y = data_abundance)
-    fit_abundance = nls(y ~ SSlogis(t, Asym, xmid, scal), data = df_abundance)
-    coeffs_abundance = coef(fit_abundance)
-    Asym        = coeffs_abundance[[1]]
-    xmid        = coeffs_abundance[[2]]
-    scal        = coeffs_abundance[[3]]
-    t_abundance = seq(0,720)
-    totalAbundance    = Asym/(1+exp((xmid-t_abundance)/scal));
-    totalAbundance_df = as.data.frame(cbind(t_abundance,totalAbundance))
-    colnames(totalAbundance_df)=c('day','total_abundance')
-
-    real Asym = 10015904335;
+    // ////// I am hardcoding the output here for now, but this can an be input as well.
+    // data_time     = c(0,1,2,3,20,50,180) #days
+    // data_abundance= c(10^3,10^4,10^6,10^8,10^9,10^10,10^10) #rDNA copies/g
+    // df_abundance  = tibble(t = data_time, y = data_abundance)
+    // fit_abundance = nls(y ~ SSlogis(t, Asym, xmid, scal), data = df_abundance)
+    // coeffs_abundance = coef(fit_abundance)
+    // Asym        = coeffs_abundance[[1]]
+    // xmid        = coeffs_abundance[[2]]
+    // scal        = coeffs_abundance[[3]]
+    // t_abundance = seq(0,720)
+    // totalAbundance    = Asym/(1+exp((xmid-t_abundance)/scal));
+    // totalAbundance_df = as.data.frame(cbind(t_abundance,totalAbundance))
+    // colnames(totalAbundance_df)=c('day','total_abundance')
+    // 
+    // real Asym = 10015904335;
     real xmid = 28.29924;
     real scal = 3.77713;
     real totalAbundance;
-    totalAbundance    = Asym/(1+exp((xmid-t)/scal));
+    // totalAbundance    = Asym/(1+exp((xmid-t)/scal));
+    totalAbundance    = 1/(1+exp((xmid-t)/scal)); // CANNOT HANDLE VALUES LIKE Asym = 10015904335
     return(totalAbundance);
   }
+  
+  // Switch to mixed food - introduction of certain bacterial taxa
+  real switch_mixed(real t, int t_mixed) {
+    return(0);
+  }
+  // Switch to solid food - introduction of certain bacterial taxa, end of milk
+  real switch_solid(real t, int t_solid) {
+    return(0);
+  }
+  
+  // HMO concentration, dependent on breastfeeding
+  // real function_HMO(real t, int binary_breastmilk, real yf_milk, real y0_milk, real logalpha_milk) 
+  real function_HMO(real t, int binary_breastmilk) {
+    // hardcode yf_milk y0_milk logalpha_milk (for now)
     
-    // Switch to mixed food - introduction of certain bacterial taxa
-    real switch_mixed(real t, int t_mixed) {
-      return(0);
-    }
-    // Switch to solid food - introduction of certain bacterial taxa, end of milk
-    real switch_solid(real t, int t_solid) {
-      return(0);
-    }
+    real yf_milk = 4.775213;
+    real y0_milk = 15.321442;
+    real logalpha_milk = -3.791853;
+    real HMO_level=0;
     
-    // HMO concentration, dependent on breastfeeding
-    // real function_HMO(real t, int binary_breastmilk, real yf_milk, real y0_milk, real logalpha_milk) 
-    real function_HMO(real t, int binary_breastmilk) {
-      // hardcode yf_milk y0_milk logalpha_milk (for now)
-      
-      real yf_milk = 4.775213;
-      real y0_milk = 15.321442;
-      real logalpha_milk = -3.791853;
-      real HMO_level=0;
-      
-      // formula yf+(y0−yf)e−exp(logalpha)t
-      if(binary_breastmilk==1){
-        HMO_level = yf_milk+(y0_milk-yf_milk)*exp(-exp(logalpha_milk)*t);
+    // formula yf+(y0−yf)e−exp(logalpha)t
+    if(binary_breastmilk==1){
+      HMO_level = yf_milk+(y0_milk-yf_milk)*exp(-exp(logalpha_milk)*t);
+    }else{
+      // not zero of course, need to find an estimate for formula feeding
+    }
+    HMO_level = HMO_level/y0_milk; // max 1
+    return(HMO_level);
+  }
+  
+  // plant-O concentration, dependent on transition to mixed and solid food
+  // real function_solid(real t, int t_mixed, int t_solid, real k_solid)
+  real function_solid(real t, int t_mixed, int t_solid){
+    // hardcode k_solid (for now)
+    
+    real k_solid = 0.015;
+    real solid_level=0;
+    if(t>=t_mixed){
+      solid_level = 1/(1+exp(-k_solid*(t-t_solid)));
+    }
+    return(solid_level);
+  }
+  
+  // Maternal IgA concentration, dependent on breastfeeding
+  real function_mIgA(real t, int binary_breastmilk, real HMO_level) {
+    real mIgA_mult = function_HMO(0,binary_breastmilk); // normalize to 1
+    real mIgA_level=0;
+    
+    if(binary_breastmilk==1){
+      mIgA_level = HMO_level/mIgA_mult;
+    }else{
+      // well this is zero (I think) - formula doesn't have IgA
+    }
+    return(mIgA_level);
+  }
+  // O2 concentration, dependent on bacterial consumption
+  // real function_O2(real t, real O2_0, real k_O2) 
+  real function_O2(real t) {
+    // hardcode O2_0, k_O2 (for now)
+    
+    real O2_0 = 1;
+    real k_O2 = 0.1;
+    real O2_level=0;
+    
+    O2_level = O2_0*exp(-k_O2*t);
+    return(O2_level);
+  }
+  
+  real function_GAPs(real t) {
+    // MODIFY THIS
+    
+    real O2_0 = 1;
+    real k_O2 = 0.1;
+    real O2_level=0;
+    
+    O2_level = O2_0*exp(-k_O2*t);
+    return(O2_level);
+  }
+  
+  real function_MCells(real t) {
+    // MODIFY THIS
+    
+    real O2_0 = 1;
+    real k_O2 = 0.1;
+    real O2_level=0;
+    
+    O2_level = O2_0*exp(-k_O2*t);
+    return(O2_level);
+  }
+  
+  real function_EGF(real t) {
+    // MODIFY THIS
+    
+    real O2_0 = 1;
+    real k_O2 = 0.1;
+    real O2_level=0;
+    
+    O2_level = O2_0*exp(-k_O2*t);
+    return(O2_level);
+  }
+  
+  real function_TLR4(real t) {
+    // MODIFY THIS
+    
+    real O2_0 = 1;
+    real k_O2 = 0.1;
+    real O2_level=0;
+    
+    O2_level = O2_0*exp(-k_O2*t);
+    return(O2_level);
+  }
+  
+  
+  real[] ODE_MODEL(real t,
+  real[] y,
+  real[] theta,
+  real[] x_r,
+  int[]  x_i 
+  ) {
+    
+    int numTaxa      = x_i[1]; // number of taxa
+    int numTimeSteps = x_i[2]; // number of time steps with observed data
+    int t_mixed      = x_i[3]; // time point of transition to mixed feeding
+    int t_solid      = x_i[4]; // time point of transition to solid feeding
+    int icheck_1     = x_i[5]; // coating ratio checkpoint 1 (10 days)
+    int icheck_2     = x_i[6]; // coating ratio checkpoint 2 (30 days)
+    int binary_breastmilk = x_i[7];
+    
+    real O2Dependency_vector[numTaxa]   = x_r[1:numTaxa];
+    real HMODependency_vector[numTaxa]  = x_r[(1*numTaxa+1):(2*numTaxa)];
+    real solidDependency_vector[numTaxa]= x_r[(2*numTaxa+1):(3*numTaxa)];
+    real growthRate_vector[numTaxa]     = x_r[(3*numTaxa+1):(4*numTaxa)];
+    real interactionMat_vector[numTaxa*numTaxa] = x_r[(4*numTaxa+1):(4*numTaxa+numTaxa*numTaxa)];
+    
+    real dydt[2*numTaxa]; // 2*numTaxa because one compartment is for coated, the other is uncoated
+    
+    
+    // taxa_array
+    // [1] "Bifidobacteriaceae"    "Enterobacteriaceae"    "Lachnospiraceae"       "Streptococcaceae"      "Bacteroidaceae"       
+    // [6] "Enterococcaceae"       "Staphylococcaceae"     "Peptostreptococcaceae" "Clostridiaceae"        "Ruminococcaceae" 
+    
+    // The following part has to have explicit equations for each taxa since the growth rate of some depend on HMO 
+    // and some depend on O2, etc. 
+    
+    // Growth and interaction parameters will be estimated prior to the infant model, by using the
+    // adult microbiome data - here the argument is that during homeostasis things are at a steady state 
+    // equilibrium  where one can integrate out the impact of immune reaction (since it will be constant over time)
+    // This means that the growth parameters are estimated in an environment with low HMO and low O2 but high plant-O. 
+    // So the presence of O2 and HMO will enhance the growth rate, whereas the lack of plant-O will reduce it.
+    
+    // Interaction matrix -> 10 x 10 (numTaxa x numTaxa)
+    // One can define matricies in Stan, but given that I will have constraints on certain parameters (directionality)
+    // I better define each parameter explicitly 
+    
+    
+    // Differential Equation Indexing
+    // 1:numTaxa -> bacterial taxa, uncoated
+    // numTaxa+1:2*numTaxa -> bacterial taxa, coated
+    
+    real level_O2;
+    real level_HMO;
+    real level_solid;
+    real level_mIgA;
+    real level_MCells;
+    real level_GAPs;
+    real total_abundance;
+    
+    real O2Dependency;
+    real HMODependency;
+    real solidDependency;
+    
+    real growthRate;
+    real interactions;
+    real growthRate_net;
+    matrix[numTaxa,numTaxa] interactionMat;
+    
+    // SAMPLING RATES
+    real tau_UC_GAP; //UNOCATED, VIA GAPS
+    real tau_UC_IEC; //UNOCATED, VIA IEC
+    real tau_UC_M; //UNOCATED, VIA M-CELLS
+    real tau_C_M; //COATED, VIA M-CELLS
+    
+    // CONSTRAINTS ON SAMPLING / REACTIVITY ***INCREASE*** RATES
+    // tau_C_M      << tau_UC_M     -> M-cell bias of IgA-Ag uptake 
+    // gamma_C_M    << gamma_UC_M   -> Tolerogenic bias of IgA-Ag complex (less reactivity increase)
+    // gamma_UC_GAP << gamma_UC_IEC -> Tolerogenic bias of GAP proteins (less reactivity increase)
+    
+    real total_abundance_sum;
+    real total_sampling_threshold;
+    real total_sampled;
+    vector[numTaxa] y_uncoated_lumen;
+    vector[numTaxa] y_coated_lumen;
+    vector[numTaxa] y_coated_over_uncoated_lumen;
+    vector[numTaxa] y_coated_over_uncoated_SED;
+    vector[numTaxa] y_coated_over_uncoated_LP;
+    vector[numTaxa] y_is_abundant_lumen;
+    vector[2*numTaxa] y_sampled_SED_IECs;
+    vector[2*numTaxa] y_sampled_SED_MCells;
+    vector[2*numTaxa] y_sampled_LP_IECs;
+    vector[2*numTaxa] y_sampled_LP_GAPs;
+    
+    vector[numTaxa] delta_reactivity_SED;
+    vector[numTaxa] delta_reactivity_MLN;
+
+    row_vector[numTaxa] interactionvectemp;
+    row_vector[numTaxa] abundancevectemp;
+    
+    y_uncoated_lumen  = y[1:numTaxa];
+    y_coated_lumen    = y[(numTaxa+1):(2*numTaxa)];
+    
+    level_O2          = function_O2(t);
+    level_HMO         = function_HMO(t,binary_breastmilk);
+    level_solid       = function_solid(t,t_mixed,t_solid);
+    level_mIgA        = function_mIgA(t,binary_breastmilk,level_HMO); 
+    level_MCells      = function_MCells(t);
+    level_GAPs        = function_GAPs(t);
+
+    total_abundance   = function_total_abundance(t);
+    interactionMat    = to_matrix(interactionMat_vector, numTaxa, numTaxa); //convert array to matrix -> this works, checked.
+    // total_abundance   = 1; // stan cannot work with 1E1, will try relative
+    
+    // DETERMINE THE TOTAL ABUNDANCE VECTOR & ABUNDANCE AS PRESENT / ABSENT
+    total_abundance_sum = 0;
+    for(k in 1:numTaxa){
+      abundancevectemp[k] = y_uncoated_lumen[k]+y_coated_lumen[k];
+      total_abundance_sum = total_abundance_sum + abundancevectemp[k];
+      if(abundancevectemp[k]>0){
+        y_is_abundant_lumen[k] = 1;
       }else{
-        // not zero of course, need to find an estimate for formula feeding
+        y_is_abundant_lumen[k] = 0;
       }
-      HMO_level = HMO_level/y0_milk; // max 1
-      return(HMO_level);
     }
     
-    // plant-O concentration, dependent on transition to mixed and solid food
-    // real function_solid(real t, int t_mixed, int t_solid, real k_solid)
-    real function_solid(real t, int t_mixed, int t_solid){
-      // hardcode k_solid (for now)
-      
-      real k_solid = 0.015;
-      real solid_level=0;
-      if(t>=t_mixed){
-        solid_level = 1/(1+exp(-k_solid*(t-t_solid)));
+    // DETERMINE THE ***LUMEN*** COATED / UNCOATED RATIOS
+    for(k in 1:numTaxa){
+      if(y_coated_lumen[k]>0 && y_uncoated_lumen[k]>0){
+        y_coated_over_uncoated_lumen[k] = y_coated_lumen[k]/(y_uncoated_lumen[k]+y_coated_lumen[k]);
+      }else{ // not == in case machine precision or some shit
+      y_coated_over_uncoated_lumen[k] = 0;
       }
-      return(solid_level);
+    }
+
+   // SAMPLING RATES
+    real tau_UC_GAP; //UNOCATED, VIA GAPS
+    real tau_UC_IEC; //UNOCATED, VIA IEC
+    real tau_UC_M; //UNOCATED, VIA M-CELLS
+    real tau_C_M; //COATED, VIA M-CELLS
+    
+    // DETERMINE THE AMOUNT SAMPLED FROM DIFFERENT PATHWAYS (IECs, MCells, GAPs)
+    // Assume that the coated IgA-Ag complexes are only sampled by M cells, since the main purpose of such a complex is to keep 
+    // the bacteria further from the epithelium, but M cells have special affinity to IgA for that non-inf. feedback loop.
+    
+    // Sample proportional to the relative abundances - If sampling exceeds a certain threshold, trim (since this is a physical)
+    // capacity for the number of DCs available. 
+    total_sampled = 0;
+    for(k in 1:numTaxa){
+      //k : index for uncoated
+      //k+numTaxa : index for coated
+      
+      // SED (Sub epithelial dome)
+      y_sampled_SED_IECs[k]           = tau_UC_IEC*(y_uncoated_lumen[k]/total_abundance_sum);
+      y_sampled_SED_IECs[k+numTaxa]   = 0;
+      
+      y_sampled_SED_MCells[k]         = level_MCells*tau_UC_M*(y_uncoated_lumen[k]/total_abundance_sum);
+      y_sampled_SED_MCells[k+numTaxa] = level_MCells*tau_C_M*(y_coated_lumen[k]/total_abundance_sum);
+      
+      // LP (Lamina Propria)
+      y_sampled_LP_IECs[k]            = tau_UC_IEC*(y_uncoated_lumen[k]/total_abundance_sum);
+      y_sampled_LP_IECs[k+numTaxa]    = 0;
+      
+      y_sampled_LP_GAPs[k]            = level_GAPs*tau_UC_GAP*(y_uncoated_lumen[k]/total_abundance_sum);
+      y_sampled_LP_GAPs[k+numTaxa]    = 0;
+      
+      total_sampled = total_sampled +
+                      y_sampled_SED_IECs[k] + y_sampled_SED_IECs[k+numTaxa] +
+                      y_sampled_SED_MCells[k] + y_sampled_SED_MCells[k+numTaxa] + 
+                      y_sampled_LP_IECs[k] + y_sampled_LP_IECs[k+numTaxa]+
+                      y_sampled_LP_GAPs[k] + y_sampled_LP_GAPs[k+numTaxa];
     }
     
-    // Maternal IgA concentration, dependent on breastfeeding
-    real function_mIgA(real t, int binary_breastmilk, real HMO_level) {
-      real mIgA_mult = function_HMO(0,binary_breastmilk); // normalize to 1
-      real mIgA_level=0;
-      
-      if(binary_breastmilk==1){
-        mIgA_level = HMO_level/mIgA_mult;
-      }else{
-        // well this is zero (I think) - formula doesn't have IgA
-      }
-      return(mIgA_level);
-    }
-    // O2 concentration, dependent on bacterial consumption
-    // real function_O2(real t, real O2_0, real k_O2) 
-    real function_O2(real t) {
-      // hardcode O2_0, k_O2 (for now)
-      
-      real O2_0 = 1;
-      real k_O2 = 0.1;
-      real O2_level=0;
-      
-      O2_level = O2_0*exp(-k_O2*t);
-      return(O2_level);
+    
+    // Sample proportional to the relative abundances - If sampling exceeds a certain threshold, trim (since this is a physical)
+    // capacity for the number of DCs available. 
+    
+    if(total_sampled > total_sampling_threshold){
+      y_sampled_SED_IECs   = total_sampling_threshold.*y_sampled_SED_IECs./total_sampled;
+      y_sampled_SED_MCells = total_sampling_threshold.*y_sampled_SED_MCells./total_sampled;
+      y_sampled_LP_IECs    = total_sampling_threshold.*y_sampled_LP_IECs./total_sampled;
+      y_sampled_LP_GAPs    = total_sampling_threshold.*y_sampled_LP_GAPs./total_sampled;
     }
     
-    // EGF
-    // GAPs
-    // M cells
-    // TLR4 
     
-    real[] ODE_MODEL(real t,
-    real[] y,
-    real[] theta,
-    real[] x_r,
-    int[]  x_i 
-    ) {
+    // More epitopes sampled at the same time, less chances for each of them to exceed the threshold of "irritation"
+    // or "aggresiveness" on their own. IMMUNE ACTIVATION THRESHOLD! 
+    
+    // They don't exceed this during the critical window, because there is a WALL or a SHIELD due to the maternal IgA. 
+    
+    // sIgA-Ag complex induces tolerance response whereas Ag alone induces inflammatory cascades. 
+    // DCs exposed to S. flexneri alone expressed high levels of the inflammatory cytokines interleukin (IL)-12, 
+    // tumor necrosis factor (TNF)-a, and KC, DCs incubated with sIgA-S. flexneri complexes had reduced inflammatory
+    // cytokine production and instead produced high levels of the anti-inflammatory mediator transforming 
+    // growth factor (TGF)-b. Thus, SIgA binding to pathogens can dampen harmful inflammatory processes while still 
+    // neutralizing the offending microbe.
+    
+    // So you need 3 coefficients, 
+    
+    // Incubating DCs with, 
+    // 1) Ag alone : most reactivity increase
+    // 2) IgA-Ag complex : reduced reactivity increase
+    // 3) Ag + GAP proteins : least reactivity increase (given they almost always lead to tolerance)
+    
+    // REACTIVITY INCREASE RATES
+    real gamma_Ag_0;//Ag alone
+    real gamma_Ag_IgA;//IgA-Ag complex
+    real gamma_Ag_GAP;//g + GAP proteins
+    // gamma_Ag_0 > gamma_Ag_IgA > gamma_Ag_GAP
+
+    
+    // I don't know how much differentiation will go on in the PPs versus MLNs, but PPs should not react to GAP samples
+    // because those samples directly drain to the MLN from LP. So maybe I should disect the reactivity in the SED vs MLN.
+    
+    for(k in 1:numTaxa){
+      // Ag alone via IECs and MCells, IgA-Ag complex via MCells
+      delta_reactivity_SED[tx] = gamma_Ag_0*(y_sampled_SED_IECs[k] + y_sampled_SED_MCells[k]) + gamma_Ag_IgA*(y_sampled_SED_MCells[k+numTaxa]); 
       
-      int numTaxa      = x_i[1]; // number of taxa
-      int numTimeSteps = x_i[2]; // number of time steps with observed data
-      int t_mixed      = x_i[3]; // time point of transition to mixed feeding
-      int t_solid      = x_i[4]; // time point of transition to solid feeding
-      int icheck_1     = x_i[5]; // coating ratio checkpoint 1 (10 days)
-      int icheck_2     = x_i[6]; // coating ratio checkpoint 2 (30 days)
-      int binary_breastmilk = x_i[7];
-      
-      real O2Dependency_vector[numTaxa]   = x_r[1:numTaxa];
-      real HMODependency_vector[numTaxa]  = x_r[(1*numTaxa+1):(2*numTaxa)];
-      real solidDependency_vector[numTaxa]= x_r[(2*numTaxa+1):(3*numTaxa)];
-      real growthRate_vector[numTaxa]     = x_r[(3*numTaxa+1):(4*numTaxa)];
-      real interactionMat_vector[numTaxa*numTaxa] = x_r[(4*numTaxa+1):(4*numTaxa+numTaxa*numTaxa)];
-      
-      real dydt[2*numTaxa]; // 2*numTaxa because one compartment is for coated, the other is uncoated
-      
-      
-      // taxa_array
-      // [1] "Bifidobacteriaceae"    "Enterobacteriaceae"    "Lachnospiraceae"       "Streptococcaceae"      "Bacteroidaceae"       
-      // [6] "Enterococcaceae"       "Staphylococcaceae"     "Peptostreptococcaceae" "Clostridiaceae"        "Ruminococcaceae" 
-      
-      // The following part has to have explicit equations for each taxa since the growth rate of some depend on HMO 
-      // and some depend on O2, etc. 
-      
-      // Growth and interaction parameters will be estimated prior to the infant model, by using the
-      // adult microbiome data - here the argument is that during homeostasis things are at a steady state 
-      // equilibrium  where one can integrate out the impact of immune reaction (since it will be constant over time)
-      // This means that the growth parameters are estimated in an environment with low HMO and low O2 but high plant-O. 
-      // So the presence of O2 and HMO will enhance the growth rate, whereas the lack of plant-O will reduce it.
-      
-      // Interaction matrix -> 10 x 10 (numTaxa x numTaxa)
-      // One can define matricies in Stan, but given that I will have constraints on certain parameters (directionality)
-      // I better define each parameter explicitly 
-      
-      
-      // Differential Equation Indexing
-      // 1:numTaxa -> bacterial taxa, uncoated
-      // numTaxa+1:2*numTaxa -> bacterial taxa, coated
-      
-      real level_O2;
-      real level_HMO;
-      real level_solid;
-      real level_mIgA;
-      real total_abundance;
-      
-      real O2Dependency;
-      real HMODependency;
-      real solidDependency;
-      
-      real growthRate;
-      real interactions;
-      real growthRate_net;
-      matrix[numTaxa,numTaxa] interactionMat;
-      
-      
-      // as a toy model, estimate the coating vector?
-      // Free parameters -> theta is the coating vector
-      row_vector[numTaxa] interactionvectemp;
-      row_vector[numTaxa] abundancevectemp;
-      real y_uncoated[numTaxa];
-      real y_coated[numTaxa];
-      
-      level_O2       = function_O2(t);
-      interactionMat = to_matrix(interactionMat_vector, numTaxa, numTaxa); //convert array to matrix -> this works, checked.
-      
-      level_HMO       = function_HMO(t,binary_breastmilk);
-      level_solid     = function_solid(t,t_mixed,t_solid);
-      level_mIgA      = function_mIgA(t,binary_breastmilk,level_HMO); 
-      // total_abundance = function_total_abundance(t);
-      total_abundance = 1; // stan cannot work with 1E1, will try relative
-      
-      y_uncoated  = y[1:numTaxa];
-      y_coated    = y[(numTaxa+1):(2*numTaxa)];
-      
-      for(k in 1:numTaxa){
-        abundancevectemp[k] = y_uncoated[k]+y_coated[k];
-      }
-      
-      for(tx in 1:numTaxa){
-        
-        O2Dependency   = O2Dependency_vector[tx]*level_O2*theta[1*numTaxa+tx];
-        HMODependency  = HMODependency_vector[tx]*level_HMO*theta[2*numTaxa+tx];
-        solidDependency= (1-solidDependency_vector[tx]*level_solid)*theta[3*numTaxa+tx];
-        growthRate     = growthRate_vector[tx];
-        
-        interactionvectemp = interactionMat[tx,1:numTaxa];
-        
-        interactions   = dot_product(interactionvectemp,abundancevectemp);
-        // print(t," ",tx," ",O2Dependency," ",HMODependency," ",solidDependency);
-        // print(t," ",tx," ",(1+O2Dependency+HMODependency-solidDependency));
-        growthRate_net = (1+O2Dependency+HMODependency-solidDependency)*growthRate;
-        
-        if(round(t)==(10+t_solid)) {
-          // print("t: ",t, "tx: ",tx," solidDependency: ", solidDependency," HMODependency: ", HMODependency, " O2Dependency: ", O2Dependency," growthRate: ", growthRate, " growthRate_net: ", growthRate_net, " theta: ", theta[tx], " level_mIgA: ",level_mIgA);
-          // print("t: ",t, "tx: ",tx," level_solid: ", level_solid);
-        }
-        
-        // UNCOATED
-        dydt[tx]          = (1-theta[tx]*level_mIgA)*y[tx]*(growthRate_net + interactions/total_abundance);
-        
-        // COATED
-        dydt[tx+numTaxa]  = (theta[tx]*level_mIgA)*y[tx+numTaxa]*(growthRate_net + interactions/total_abundance);
-        
-      }
-      // print("dydt: ",dydt)
-      // print("t: ",t)
-      // print("y: ",y)
-      return(dydt);
+      // Ag alone via IECs, g + GAP proteins via GAPs
+      delta_reactivity_MLN[tx] = gamma_Ag_0*y_sampled_LP_IECs[k] + gamma_Ag_GAP*y_sampled_LP_GAPs[k];
     }
+    
+    // HERE - FIGURE OUT HOW TO USE DELTA_REACTIVITY TO TRANSLATE IT INTO THE PARAMETRIZATION OF THE FUZZY IGA CURVE
+    // THAT PARAMETRIZATION IS YOUR IMMUNE ACTIVATION THREHSOLD!
+    
+    // Also need to decide on the memory vs plasma cell diff! Think about age of the cells - each delta_t is a day in your case (since parameters are per day) - so you should 
+    // think about how many days it takes to leave the GC -> once you leave, what is the threshold of turning memory vs plasma?
+    
+    // MIGHT NOT NEED TO EVEN DEFINE TOL. VS EFF. DCs BECAUSE THAT REQUIRES ANOTHER LEVEL OF THRESHOLDING
+    // CHECK PLOT_SIGNALS.m LINE 90-96, WHERE THIS CURVE IS PARAMETERIZED - THERE IS ONE PARAMETER, WHICH IS biasCoat - that's what u are looking for!
+    
+    for(tx in 1:numTaxa){
+      
+      O2Dependency   = O2Dependency_vector[tx]*level_O2*theta[1*numTaxa+tx];
+      HMODependency  = HMODependency_vector[tx]*level_HMO*theta[2*numTaxa+tx];
+      solidDependency= (1-solidDependency_vector[tx]*level_solid)*theta[3*numTaxa+tx];
+      growthRate     = growthRate_vector[tx];
+      
+      interactionvectemp = interactionMat[tx,1:numTaxa];
+      interactions       = dot_product(interactionvectemp,abundancevectemp);
+      growthRate_net     = (1+O2Dependency+HMODependency-solidDependency)*growthRate;
+      
+      
+      // UNCOATED, LUMEN
+      dydt[tx+0*numTaxa] = (1-theta[tx]*level_mIgA)*y_uncoated_lumen[tx]*(growthRate_net + interactions/total_abundance);
+      
+      // COATED, LUMEN
+      dydt[tx+1*numTaxa] = (theta[tx]*level_mIgA)*y_coated_lumen[tx]*(growthRate_net + interactions/total_abundance);
+      
+      // Assume that the sampled number of bacteria is negligible compared to the amount in the lumen so not subtracted from that.
+
+      
+    }
+    // print("dydt: ",dydt)
+    // print("t: ",t)
+    // print("y: ",y)
+    return(dydt);
+  }
 }
 
 data {
@@ -351,7 +527,7 @@ model {
   // 30 days -> 50%
   // This is the total coated - we don't know how this is distributed among taxa, 
   // and finding this out is the point of this estimation.
-
+  
   all_subject = 0;
   coated_subject = 0;
   for(tx in 1:numTaxa){

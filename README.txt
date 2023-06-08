@@ -1,3 +1,9 @@
+Progress 08/06/2023
+---------------------------------------------------------------------------------------------------
+
+Check model E0, a lot of updating went in there. In a nutshell, I am conceptualizing the reactivity and the immune thresholds rather than dealing with DC and T cell compartments, since that would require way more parameters and I don't have data to fit them.
+
+
 Progress 07/06/2023
 ---------------------------------------------------------------------------------------------------
 
@@ -5,7 +11,6 @@ Ok so I will NEED a metric of total abundance, since it related to the aggressiv
 
 In terms of sampling -> this is numerically constrained by the number of DCs. Given the DC capacity, if the amount sampled is below, leave it as it is. If not, truncate. Do not give priority for now.
 (Priority would be, say you have the capacity of 5, and you have 1 1 3 - sure, you sample them all. But if you have 3 3 9, do you sample 0 0 5, or do you sample 1 1 3?)
-
 
 
 Progress 06/06/2023

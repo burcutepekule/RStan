@@ -26,13 +26,22 @@ functions {
     // totalAbundance_df = as.data.frame(cbind(t_abundance,totalAbundance))
     // colnames(totalAbundance_df)=c('day','total_abundance')
     // 
-    // real Asym = 10015904335; // CANNOT HANDLE VALUES LIKE Asym = 10015904335
-    real Asym = 1;
+    // real Asym = 10015904335;
     real xmid = 28.29924;
     real scal = 3.77713;
     real totalAbundance;
-    totalAbundance    = Asym/(1+exp((xmid-t)/scal));
+    // totalAbundance    = Asym/(1+exp((xmid-t)/scal));
+    totalAbundance    = 1/(1+exp((xmid-t)/scal)); // CANNOT HANDLE VALUES LIKE Asym = 10015904335
     return(totalAbundance);
+  }
+  
+  // Switch to mixed food - introduction of certain bacterial taxa
+  real switch_mixed(real t, int t_mixed) {
+    return(0);
+  }
+  // Switch to solid food - introduction of certain bacterial taxa, end of milk
+  real switch_solid(real t, int t_solid) {
+    return(0);
   }
   
   // HMO concentration, dependent on breastfeeding
@@ -137,15 +146,15 @@ functions {
     return(TLR4_level);
   }
   
-  real function_nBCells(real t) { // Naive BCell influx
-  // MODIFY THIS
-  
-  real nBCells_0 = 1;
-  real k_nBCells = 0.1;
-  real nBCells_level=0;
-  
-  nBCells_level = nBCells_0*exp(-k_nBCells*t);
-  return(nBCells_level);
+    real function_nBCells(real t) { // Naive BCell influx
+    // MODIFY THIS
+    
+    real nBCells_0 = 1;
+    real k_nBCells = 0.1;
+    real nBCells_level=0;
+    
+    nBCells_level = nBCells_0*exp(-k_nBCells*t);
+    return(nBCells_level);
   }
   
   
@@ -170,10 +179,8 @@ functions {
     real growthRate_vector[numTaxa]     = x_r[(3*numTaxa+1):(4*numTaxa)];
     real interactionMat_vector[numTaxa*numTaxa] = x_r[(4*numTaxa+1):(4*numTaxa+numTaxa*numTaxa)];
     
-
     real dydt[2*numTaxa]; // 2*numTaxa because one compartment is for coated, the other is uncoated
     
-    // check paper ApplyingMathematicalToolstoAccelerateVaccine Development/ModelingShigellaImmuneDynamics for B cell death rates etc.
     
     // taxa_array
     // [1] "Bifidobacteriaceae"    "Enterobacteriaceae"    "Lachnospiraceae"       "Streptococcaceae"      "Bacteroidaceae"       

@@ -354,7 +354,7 @@ functions {
     // REACTIVITY INCREASE RATES
     real gamma_Ag_0;//Ag alone
     real gamma_Ag_IgA;//IgA-Ag complex
-    real gamma_Ag_GAP;//g + GAP proteins
+    real gamma_Ag_GAP;//Ag + GAP proteins
     // gamma_Ag_0 > gamma_Ag_IgA > gamma_Ag_GAP
     
     
@@ -363,10 +363,10 @@ functions {
     
     for(k in 1:numTaxa){
       // Ag alone via IECs and MCells, IgA-Ag complex via MCells
-      delta_reactivity_SED[tx] = gamma_Ag_0*(y_sampled_SED_IECs[k] + y_sampled_SED_MCells[k]) + gamma_Ag_IgA*(y_sampled_SED_MCells[k+numTaxa]); 
+      delta_reactivity_SED[k] = gamma_Ag_0*(y_sampled_SED_IECs[k] + y_sampled_SED_MCells[k]) + gamma_Ag_IgA*(y_sampled_SED_MCells[k+numTaxa]); 
       
       // Ag alone via IECs, g + GAP proteins via GAPs
-      delta_reactivity_MLN[tx] = gamma_Ag_0*y_sampled_LP_IECs[k] + gamma_Ag_GAP*y_sampled_LP_GAPs[k];
+      delta_reactivity_MLN[k] = gamma_Ag_0*y_sampled_LP_IECs[k] + gamma_Ag_GAP*y_sampled_LP_GAPs[k];
     }
     
     // HERE - FIGURE OUT HOW TO USE DELTA_REACTIVITY TO TRANSLATE IT INTO THE PARAMETRIZATION OF THE FUZZY IGA CURVE

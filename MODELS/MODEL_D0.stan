@@ -206,10 +206,10 @@ functions {
         // print(t," ",tx," ",(1+O2Dependency+HMODependency-solidDependency));
         growthRate_net = (1+O2Dependency+HMODependency-solidDependency)*growthRate;
         
-        if(round(t)==(10+t_solid)) {
-          // print("t: ",t, "tx: ",tx," solidDependency: ", solidDependency," HMODependency: ", HMODependency, " O2Dependency: ", O2Dependency," growthRate: ", growthRate, " growthRate_net: ", growthRate_net, " theta: ", theta[tx], " level_mIgA: ",level_mIgA);
-          // print("t: ",t, "tx: ",tx," level_solid: ", level_solid);
-        }
+        // if(round(t)==(10+t_solid)) {
+        //   // print("t: ",t, "tx: ",tx," solidDependency: ", solidDependency," HMODependency: ", HMODependency, " O2Dependency: ", O2Dependency," growthRate: ", growthRate, " growthRate_net: ", growthRate_net, " theta: ", theta[tx], " level_mIgA: ",level_mIgA);
+        //   // print("t: ",t, "tx: ",tx," level_solid: ", level_solid);
+        // }
         
         // UNCOATED
         dydt[tx]          = (1-theta[tx]*level_mIgA)*y[tx]*(growthRate_net + interactions/total_abundance);

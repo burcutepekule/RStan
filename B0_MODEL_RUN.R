@@ -13,6 +13,10 @@ if (length(args)==0) {
   df_config = read.table(args[1], header=TRUE)
 }
 
+
+# df_config     = read.table('config_raw.txt', header = TRUE, sep = "", dec = ".")
+
+  
 scale         = df_config[which(df_config[,1]=='scale'),2]
 smoothed      = df_config[which(df_config[,1]=='smoothed'),2]
 numWarmup     = df_config[which(df_config[,1]=='numWarmup'),2]
@@ -31,9 +35,8 @@ odeSolver     = df_config[which(df_config[,1]=='odeSolver'),2]
 
 ## scale up
 # scale = 1E11 # TOO BIG
-# scale   = 0 # DOABLE
+# scale = 0 # DOABLE
 
-indexes = 1:10 # to experiment
 
 if(scale>0){
   y0_meanSubjects             = round(scale*y0_meanSubjects)
@@ -55,6 +58,7 @@ if(scale>0){
   phi_use                     = 10^(phi_use_exp+0) # SEEMS LIKE 1E6 IS THE ONE THAT WORKS, SO NEED TO GET THIS FROM THE ORDER OF MAG. OF THE DATA
 }
 
+indexes = 1:9 # ALL
 abundanceArray_meanSubjects = abundanceArray_meanSubjects[,indexes]
 y0_meanSubjects             = y0_meanSubjects[indexes]
 taxa_array                  = taxa_array[indexes]

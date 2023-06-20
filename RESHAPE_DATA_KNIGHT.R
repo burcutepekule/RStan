@@ -59,9 +59,9 @@ data_knight_F5[, numeric_cols] <- lapply(data_knight_F5[, numeric_cols], functio
 
 # FILTER FOR FAMILIES
 
-families = c('Bifidobacteriaceae','Enterobacteriaceae','Lachnospiraceae','Streptococcaceae',
-             'Bacteroidaceae','Enterococcaceae','Staphylococcaceae','Peptostreptococcaceae',
-             'Clostridiaceae','Ruminococcaceae')
+families = c('Enterobacteriaceae','Lactobacillaceae','Bifidobacteriaceae',
+             'Bacteroidaceae','Lachnospiraceae','Clostridiaceae','Ruminococcaceae',
+             'Streptococcaceae','Staphylococcaceae')
 
 data_knight_M5 = data_knight_M5 %>% filter(family %in% families)
 data_knight_M5_keep = data_knight_M5
@@ -103,6 +103,9 @@ library("ggplot2")
 ggplot(abundanceArray_meanSubjects_longer, aes(x = day, y = abundance, color = taxa)) + geom_point() 
 abundanceArray_meanSubjects = abundanceArray_meanSubjects[2:dim(abundanceArray_meanSubjects)[1],]
 
+
+## also read the interaction masking matrix
+interactionMask = read_excel('KNIGHT_DATA/INTERACTION_MASK.xlsx',col_names = TRUE, skip=0)
 
 
 

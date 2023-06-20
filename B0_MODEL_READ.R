@@ -8,11 +8,11 @@ library('brms')
 library('dplyr')
 # https://cran.r-project.org/web/packages/rstan/vignettes/stanfit-objects.html
 
-pathModelOutput='/Users/burcutepekule/Library/CloudStorage/Dropbox/criticalwindow/code/R/RStan/OUT/04062023/RDATA';
+pathModelOutput='/Users/burcutepekule/Library/CloudStorage/Dropbox/criticalwindow/code/R/RStan/OUT/17062023/RDATA';
 fileList = list.files(path =pathModelOutput, pattern='.RData')
 
 ##### Pick the file
-indexPick     = 2
+indexPick     = 1
 fileNamePick  = paste0(pathModelOutput,"/",fileList[indexPick])
 #################################################
 
@@ -39,16 +39,16 @@ for(i in 1:numOfParams){
   paramNames = c(paramNames,paste0(paramRoot,'[',i,']'))
 }
 
-# color_scheme_set("brightblue")
-# mcmc_dens(posterior, pars = paramNames, 
-#           facet_args = list(ncol = 1, strip.position = "left"))
-# 
-# color_scheme_set("brightblue")
-# mcmc_intervals(posterior, pars = paramNames)
-# 
-# color_scheme_set("viridis")
-# mcmc_trace(posterior, pars = paramNames, 
-#            facet_args = list(ncol = 1, strip.position = "left"))
+color_scheme_set("brightblue")
+mcmc_dens(posterior, pars = paramNames,
+          facet_args = list(ncol = 1, strip.position = "left"))
+
+color_scheme_set("brightblue")
+mcmc_intervals(posterior, pars = paramNames)
+
+color_scheme_set("viridis")
+mcmc_trace(posterior, pars = paramNames,
+           facet_args = list(ncol = 1, strip.position = "left"))
 
 #################################################
 source("SETUP.R")
@@ -56,30 +56,30 @@ source('RESHAPE_DATA_KNIGHT.R')
 taxa_array = colnames(abundanceArray_meanSubjects)
 
 
-# compartment_names = 'output_pred'
-# summaryTable = as.data.frame(summary(loadedModel,compartment_names)[[1]])
-# summaryTable$populationNames = rownames(summaryTable)
-# summaryTable$t    = sub(",.*","",sub(".*\\[", "", summaryTable$populationNames))  # Extract characters after pattern
-# summaryTable$taxa = sub("\\].*","",sub(".*,", "", summaryTable$populationNames))  # Extract characters after pattern
-# summaryTable_use = summaryTable[c('t','taxa','mean','2.5%','97.5%','50%')]
-# summaryTable_use$t = as.numeric(summaryTable_use$t)
-# summaryTable_use$mean = as.numeric(summaryTable_use$mean)
-# summaryTable_use$`97.5%` = as.numeric(summaryTable_use$`97.5%`)
-# summaryTable_use$`2.5%` = as.numeric(summaryTable_use$`2.5%`)
-# summaryTable_use$`50%` = as.numeric(summaryTable_use$`50%`)
-# summaryTable_use$taxa = paste0('y_',summaryTable_use$taxa)
-# summaryTable_use = summaryTable_use %>% rowwise() %>% mutate(taxa = taxa_array[as.numeric(sub(",.*","",sub(".*\\_", "", taxa)))] )
-# 
-# graphics.off()
-# ggplot() +
-#   geom_point(data=abundanceArray_meanSubjects_longer,aes(x=day,y=abundance,fill=taxa),shape=21,size=1,colour = "black", fill = "white") +
-#   # geom_ribbon(data=summaryTable_use,aes(x=t,ymin=`2.5%`,ymax=`97.5%`,fill=taxa),alpha=.5) +
-#   geom_line(data=summaryTable_use,aes(x=t,y=`50%`),colour="black") +
-#   facet_wrap(~ taxa ,scales="free",nrow=2) +
-#   scale_colour_manual(values=c("grey20","grey"),guide=FALSE) +
-#   scale_alpha_manual(values=c(1,0),guide=FALSE) +
-#   # scale_y_continuous(trans = 'log10')+
-#   labs(x="sample index",y="abundance")
+compartment_names = 'output_pred'
+summaryTable = as.data.frame(summary(loadedModel,compartment_names)[[1]])
+summaryTable$populationNames = rownames(summaryTable)
+summaryTable$t    = sub(",.*","",sub(".*\\[", "", summaryTable$populationNames))  # Extract characters after pattern
+summaryTable$taxa = sub("\\].*","",sub(".*,", "", summaryTable$populationNames))  # Extract characters after pattern
+summaryTable_use = summaryTable[c('t','taxa','mean','2.5%','97.5%','50%')]
+summaryTable_use$t = as.numeric(summaryTable_use$t)
+summaryTable_use$mean = as.numeric(summaryTable_use$mean)
+summaryTable_use$`97.5%` = as.numeric(summaryTable_use$`97.5%`)
+summaryTable_use$`2.5%` = as.numeric(summaryTable_use$`2.5%`)
+summaryTable_use$`50%` = as.numeric(summaryTable_use$`50%`)
+summaryTable_use$taxa = paste0('y_',summaryTable_use$taxa)
+summaryTable_use = summaryTable_use %>% rowwise() %>% mutate(taxa = taxa_array[as.numeric(sub(",.*","",sub(".*\\_", "", taxa)))] )
+
+graphics.off()
+ggplot() +
+  geom_point(data=abundanceArray_meanSubjects_longer,aes(x=day,y=abundance,fill=taxa),shape=21,size=1,colour = "black", fill = "white") +
+  # geom_ribbon(data=summaryTable_use,aes(x=t,ymin=`2.5%`,ymax=`97.5%`,fill=taxa),alpha=.5) +
+  geom_line(data=summaryTable_use,aes(x=t,y=`50%`),colour="black") +
+  facet_wrap(~ taxa ,scales="free",nrow=2) +
+  scale_colour_manual(values=c("grey20","grey")) +
+  scale_alpha_manual(values=c(1,0)) +
+  # scale_y_continuous(trans = 'log10')+
+  labs(x="sample index",y="abundance")
 
 
 # graphics.off()

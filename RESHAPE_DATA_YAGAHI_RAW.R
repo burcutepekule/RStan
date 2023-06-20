@@ -15,9 +15,13 @@ saved_data_smooth       = saved_data_smooth %>% filter(subject!='K')
 saved_data_milkandsolid = saved_data_milkandsolid %>% filter(Subject!='K')
 saved_data_solid        = saved_data_solid %>% filter(Subject!='K')
 
-families = c('Bifidobacteriaceae','Enterobacteriaceae','Lachnospiraceae','Streptococcaceae',
-             'Bacteroidaceae','Enterococcaceae','Staphylococcaceae','Peptostreptococcaceae',
-             'Clostridiaceae','Ruminococcaceae')
+# families = c('Bifidobacteriaceae','Enterobacteriaceae','Lachnospiraceae','Streptococcaceae',
+#              'Bacteroidaceae','Enterococcaceae','Staphylococcaceae','Peptostreptococcaceae',
+#              'Clostridiaceae','Ruminococcaceae')
+
+families = c('Enterobacteriaceae','Lactobacillaceae','Bifidobacteriaceae',
+             'Bacteroidaceae','Lachnospiraceae','Clostridiaceae','Ruminococcaceae',
+             'Streptococcaceae','Staphylococcaceae')
 
 saved_data_mean_smooth      = saved_data_mean_smooth %>% filter(taxa %in% families)
 saved_data_mean_smooth      = saved_data_mean_smooth %>% rowwise() %>% mutate(abundance=ifelse(abundance<0,0,0.01*abundance))

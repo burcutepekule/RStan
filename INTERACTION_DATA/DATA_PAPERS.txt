@@ -1,0 +1,5 @@
+genus.interaction.xlsx, High-throughput microbial culturomics using automation and machine learning
+
+
+Sd01, sd02, sd03, Mathematical modeling of primary succession of murine intestinal microbiota
+ 

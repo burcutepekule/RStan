@@ -1,3 +1,8 @@
+Progress 09/06/2023
+---------------------------------------------------------------------------------------------------
+
+Realized that I really need ABM to track B cells, so have to go back to MATLAB. Will do the initial estimations (interactions, growth, etc.) via Stan but eventually have to have my own MCMC sampling in MATLAB. Now moving to E0 version in MATLAB. Check it out.
+
 Progress 08/06/2023
 ---------------------------------------------------------------------------------------------------
 

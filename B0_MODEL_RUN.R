@@ -1,20 +1,20 @@
 #!/usr/bin/env Rscript
-args = commandArgs(trailingOnly=TRUE)
+# args = commandArgs(trailingOnly=TRUE)
 # setwd(getwd())
 setwd('/Users/burcutepekule/Library/CloudStorage/Dropbox/criticalwindow/code/R/RStan')
 source("SETUP.R")
 source('RESHAPE_DATA_KNIGHT.R')
 
 # test if there is at least one argument: if not, return an error
-if (length(args)==0) {
-  stop("At least one argument must be supplied (input file).n", call.=FALSE)
-} else if (length(args)>0) {
-  # default output file
-  df_config = read.table(args[1], header=TRUE)
-}
+# if (length(args)==0) {
+#   stop("At least one argument must be supplied (input file).n", call.=FALSE)
+# } else if (length(args)>0) {
+#   # default output file
+#   df_config = read.table(args[1], header=TRUE)
+# }
 
 
-# df_config     = read.table('config_raw.txt', header = TRUE, sep = "", dec = ".")
+df_config     = read.table('config_raw.txt', header = TRUE, sep = "", dec = ".")
 
   
 scale         = df_config[which(df_config[,1]=='scale'),2]
@@ -25,6 +25,7 @@ numChains     = df_config[which(df_config[,1]=='numChains'),2]
 valSeed       = df_config[which(df_config[,1]=='valSeed'),2]
 odeSolver     = df_config[which(df_config[,1]=='odeSolver'),2]
 
+numChains=1
 # HUMAN MICROBIOME PROJECT DATA
 
 # y0_meanSubjects
@@ -86,7 +87,7 @@ data_list = list(
   observations = tibble(abundanceArray_meanSubjects),
   
   p_mu           = c(0,2),
-  p_a_intra      = c(0,2),
+  p_a_intra      = c(100,2),
   p_a_inter      = c(0,2),
   p_phi          = 1/phi_use,
   

@@ -35,6 +35,7 @@ functions {
     
     scale = p_phi;  // LETS SEE IF IT MAKES SENSE TO CONNECT THIS TO PHI (DISPERSION PARAMETER)
 
+    print(interactionMat_vector_diag)
     // Build the matrix with non-diagonal and diagonal terms
     counter_diag    = 1;
     counter_nondiag = 1;

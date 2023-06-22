@@ -50,6 +50,9 @@ functions {
       }
     }
     
+    
+    print(interactionMat_vector_diag)
+    
     for(k in 1:numTaxa){
       abundancevectemp[k] = y[k];
     }

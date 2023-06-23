@@ -8,11 +8,11 @@ library('brms')
 library('dplyr')
 # https://cran.r-project.org/web/packages/rstan/vignettes/stanfit-objects.html
 
-pathModelOutput='/Users/burcutepekule/Library/CloudStorage/Dropbox/criticalwindow/code/R/RStan/OUT/22062023/RDATA';
+pathModelOutput='/Users/burcutepekule/Library/CloudStorage/Dropbox/criticalwindow/code/R/RStan/OUT/23062023/RDATA';
 fileList = list.files(path =pathModelOutput, pattern='.RData')
 
 ##### Pick the file
-indexPick     = 1
+indexPick     = 2
 fileNamePick  = paste0(pathModelOutput,"/",fileList[indexPick])
 #################################################
 
@@ -34,21 +34,21 @@ n_warmup <- fit@sim$warmup2[1]
 n_iter   <-fit@sim$iter[[1]]
 print(c(n_iter,n_warmup,n_chains))
 
-paramNames=c()
-for(i in 1:numOfParams){
-  paramNames = c(paramNames,paste0(paramRoot,'[',i,']'))
-}
-
-color_scheme_set("brightblue")
-mcmc_dens(posterior, pars = paramNames,
-          facet_args = list(ncol = 1, strip.position = "left"))
-
-color_scheme_set("brightblue")
-mcmc_intervals(posterior, pars = paramNames)
-
-color_scheme_set("viridis")
-mcmc_trace(posterior, pars = paramNames,
-           facet_args = list(ncol = 1, strip.position = "left"))
+# paramNames=c()
+# for(i in 1:numOfParams){
+#   paramNames = c(paramNames,paste0(paramRoot,'[',i,']'))
+# }
+# 
+# color_scheme_set("brightblue")
+# mcmc_dens(posterior, pars = paramNames,
+#           facet_args = list(ncol = 1, strip.position = "left"))
+# 
+# color_scheme_set("brightblue")
+# mcmc_intervals(posterior, pars = paramNames)
+# 
+# color_scheme_set("viridis")
+# mcmc_trace(posterior, pars = paramNames,
+#            facet_args = list(ncol = 1, strip.position = "left"))
 
 #################################################
 source("SETUP.R")
@@ -73,6 +73,40 @@ summaryTable_use$`50%` = as.numeric(summaryTable_use$`50%`)
 summaryTable_use$taxa = paste0('y_',summaryTable_use$taxa)
 summaryTable_use = summaryTable_use %>% rowwise() %>% mutate(taxa = taxa_array[as.numeric(sub(",.*","",sub(".*\\_", "", taxa)))] )
 
+# Save the interaction matricies to compare
+
+paramRoot     = as.name('interactionMat_vector_Agnostic')
+numOfParams   = dim(list_of_draws[[paramRoot]])[2]
+paramNames_agnostic=c()
+for(i in 1:numOfParams){
+  paramNames_agnostic = c(paramNames_agnostic,paste0(paramRoot,'[',i,']'))
+  
+}
+paramRoot     = as.name('interactionMat_vector_Gnostic')
+numOfParams   = dim(list_of_draws[[paramRoot]])[2]
+paramNames_gnostic=c()
+for(i in 1:numOfParams){
+  paramNames_gnostic = c(paramNames_gnostic,paste0(paramRoot,'[',i,']'))
+}
+paramRoot     = as.name('growthRate_vector')
+numOfParams   = dim(list_of_draws[[paramRoot]])[2]
+paramNames_growth=c()
+for(i in 1:numOfParams){
+  paramNames_growth = c(paramNames_growth,paste0(paramRoot,'[',i,']'))
+}
+paramRoot     = as.name('phi')
+numOfParams   = dim(list_of_draws[[paramRoot]])[2]
+paramNames_phi=c()
+for(i in 1:numOfParams){
+  paramNames_phi = c(paramNames_phi,paste0(paramRoot,'[',i,']'))
+}
+
+summaryTable_agnostic = as.data.frame(summary(loadedModel,paramNames_agnostic)[[1]])
+summaryTable_gnostic  = as.data.frame(summary(loadedModel,paramNames_gnostic)[[1]])
+summaryTable_growth   = as.data.frame(summary(loadedModel,paramNames_growth)[[1]])
+summaryTable_phi      = as.data.frame(summary(loadedModel,paramNames_phi)[[1]])
+
+
 graphics.off()
 ggplot() +
   geom_point(data=abundanceArray_meanSubjects_longer,aes(x=day,y=abundance,fill=taxa),shape=21,size=1,colour = "black", fill = "white") +
@@ -88,31 +122,6 @@ ggplot() +
 # graphics.off()
 # ggplot(summaryTable_use, aes(x = t, y = mean, color = taxa)) + geom_point()
 
-# Save the interaction matricies to compare
-
-paramRoot     = as.name('interactionMat_vector_diag')
-numOfParams   = dim(list_of_draws[[paramRoot]])[2]
-paramNames_diag=c()
-for(i in 1:numOfParams){
-  paramNames_diag = c(paramNames_diag,paste0(paramRoot,'[',i,']'))
-  
-}
-paramRoot     = as.name('interactionMat_vector_nondiag')
-numOfParams   = dim(list_of_draws[[paramRoot]])[2]
-paramNames_nondiag=c()
-for(i in 1:numOfParams){
-  paramNames_nondiag = c(paramNames_nondiag,paste0(paramRoot,'[',i,']'))
-}
-paramRoot     = as.name('growthRate_vector')
-numOfParams   = dim(list_of_draws[[paramRoot]])[2]
-paramNames_growth=c()
-for(i in 1:numOfParams){
-  paramNames_growth = c(paramNames_growth,paste0(paramRoot,'[',i,']'))
-}
-
-summaryTable_nondiag = as.data.frame(summary(loadedModel,paramNames_nondiag)[[1]])
-summaryTable_diag    = as.data.frame(summary(loadedModel,paramNames_diag)[[1]])
-summaryTable_growth  = as.data.frame(summary(loadedModel,paramNames_growth)[[1]])
 
 # https://mc-stan.org/rstan/reference/Rhat.html
 # my Rhats are terrible...
@@ -120,26 +129,37 @@ summaryTable_growth  = as.data.frame(summary(loadedModel,paramNames_growth)[[1]]
 ############ INTERACTION MATRIX
 interactionMatrix      = matrix(0,nrow = length(taxa_array), ncol = length(taxa_array))
 interactionMatrix_rhat = matrix(0,nrow = length(taxa_array), ncol = length(taxa_array))
-names_diag    = rownames(summaryTable_diag)
-names_nondiag = rownames(summaryTable_nondiag)
-idx_diag      = as.numeric(sub("\\].*", "",sub(".*\\[", "", names_diag)))
-idx_nondiag   = as.numeric(sub("\\].*", "",sub(".*\\[", "", names_nondiag)))
-numCols       = length(taxa_array)
-correctIndex  = 0
+names_gnostic   = rownames(summaryTable_gnostic)
+names_agnostic  = rownames(summaryTable_agnostic)
+idx_gnostic     = as.numeric(sub("\\].*", "",sub(".*\\[", "", names_gnostic)))
+idx_agnostic    = as.numeric(sub("\\].*", "",sub(".*\\[", "", names_agnostic)))
+numCols         = length(taxa_array)
+correctIndex    = 0
 
-for (r in 1:length(taxa_array)){
-  for (c in 1:length(taxa_array)){
-    if(r==c){
-      interactionMatrix[r,c]      = -1*summaryTable_diag[which(idx_diag==r),]$mean
-      interactionMatrix_rhat[r,c] = summaryTable_diag[which(idx_diag==r),]$Rhat
-      correctIndex = correctIndex + 1
+counter_mask    = 1;
+counter_agnostic= 1;
+counter_gnostic = 1;
+
+numTaxa = length(taxa_array)
+scale   = 1
+
+for(r in 1:numTaxa){
+  for(c in 1:numTaxa){
+    mask = interactionMask_vector[counter_mask];
+    if(mask==0){
+      interactionMatrix[r,c]      = scale*summaryTable_agnostic[counter_agnostic,]$mean
+      interactionMatrix_rhat[r,c] = summaryTable_agnostic[counter_agnostic,]$Rhat
+      counter_agnostic    = counter_agnostic + 1;
     }else{
-      idx_nondiag_corrected       = idx_nondiag+correctIndex
-      interactionMatrix[r,c]      = summaryTable_nondiag[which(idx_nondiag_corrected==((r-1)*numCols) + c),]$mean
-      interactionMatrix_rhat[r,c] = summaryTable_nondiag[which(idx_nondiag_corrected==((r-1)*numCols) + c),]$Rhat
+      interactionMatrix[r,c]      = mask*scale*summaryTable_gnostic[counter_gnostic,]$mean
+      interactionMatrix_rhat[r,c] = summaryTable_gnostic[counter_gnostic,]$Rhat
+      counter_gnostic     = counter_gnostic + 1;
     }
+    counter_mask = counter_mask + 1;
   }
 }
+
+
 colnames(interactionMatrix) = taxa_array
 rownames(interactionMatrix) = taxa_array
 colnames(interactionMatrix_rhat) = taxa_array
@@ -176,6 +196,29 @@ addWorksheet(wb, "Rhat")
 writeData(wb, "mean", as.data.frame(growthMatrix), startRow = 1, startCol = 1)
 writeData(wb, "Rhat", as.data.frame(growthMatrix_rhat), startRow = 1, startCol = 1)
 saveWorkbook(wb, file = paste0(pathModelOutput,"/GROWTH_",ts,".xlsx"), overwrite = TRUE)
+
+############ PHI
+phiMatrix      = matrix(0,nrow = 1, ncol = length(taxa_array))
+phiMatrix_rhat = matrix(0,nrow = 1, ncol = length(taxa_array))
+names_phi = rownames(summaryTable_phi)
+idx_phi   = as.numeric(sub("\\].*", "",sub(".*\\[", "", names_phi)))
+
+for (c in 1:length(taxa_array)){
+  phiMatrix[1,c]      = summaryTable_phi[which(idx_phi==c),]$mean
+  phiMatrix_rhat[1,c] = summaryTable_phi[which(idx_phi==c),]$Rhat
+}
+colnames(phiMatrix) = taxa_array
+colnames(phiMatrix_rhat) = taxa_array
+
+library(openxlsx)
+ts = as.numeric(sub(".*\\_", "",sub("\\.RData.*", "",fileList[indexPick])))
+wb <- createWorkbook()
+addWorksheet(wb, "mean")
+addWorksheet(wb, "Rhat")
+writeData(wb, "mean", as.data.frame(phiMatrix), startRow = 1, startCol = 1)
+writeData(wb, "Rhat", as.data.frame(phiMatrix_rhat), startRow = 1, startCol = 1)
+saveWorkbook(wb, file = paste0(pathModelOutput,"/PHI_",ts,".xlsx"), overwrite = TRUE)
+
 
 
 

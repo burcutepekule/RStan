@@ -47,15 +47,16 @@ if(scale>0){
   abundanceArray_meanSubjects = as.data.frame(lapply(abundanceArray_meanSubjects, function(x) as.numeric(x))) #normalize and scale to absolute abundance
   abundanceArray_meanSubjects = as.data.frame(lapply(abundanceArray_meanSubjects, function(x) as.integer(round(scale*x)))) #normalize and scale to absolute abundance
   abundanceArray_meanSubjects_longer$abundance = as.integer(round(scale*abundanceArray_meanSubjects_longer$abundance)) #normalize and scale to absolute abundance
-  phi_use_exp                 = max(round(log10(y0_meanSubjects)));
+  # phi_use_exp                 = max(round(log10(y0_meanSubjects)));
+  phi_use_exp                 = round(log10(y0_meanSubjects));
   phi_use                     = 10^(phi_use_exp+0) # SEEMS LIKE 1E6 IS THE ONE THAT WORKS, SO NEED TO GET THIS FROM THE ORDER OF MAG. OF THE DATA
-  
 }else{
   names(y0_meanSubjects)      = colnames(abundanceArray_meanSubjects)
   days_array = as.numeric(rownames(abundanceArray_meanSubjects))
   taxa_array = colnames(abundanceArray_meanSubjects)
   abundanceArray_meanSubjects = as.data.frame(lapply(abundanceArray_meanSubjects, function(x) as.numeric(x))) #normalize and scale to absolute abundance
-  phi_use_exp                 = max((log10(y0_meanSubjects)));
+  # phi_use_exp                 = max((log10(y0_meanSubjects)));
+  phi_use_exp                 = (log10(y0_meanSubjects));
   phi_use                     = 10^(phi_use_exp+0) # SEEMS LIKE 1E6 IS THE ONE THAT WORKS, SO NEED TO GET THIS FROM THE ORDER OF MAG. OF THE DATA
 }
 
@@ -77,29 +78,6 @@ if(smoothed==1){
   }
 }
 
-interactionMask_df              = as.data.frame(interactionMask)
-interactionMask_df[is.na(interactionMask_df)] <- 0
-
-colnames(interactionMask_df)[1] = 'effected'
-interactionMask_long     = interactionMask_df %>% pivot_longer(!effected, names_to = "effector", values_to = "direction") 
-interactionMask_long     = interactionMask_long %>% rowwise() %>% mutate(sd=ifelse(is.na(direction),4,2))
-interactionMask_long     = interactionMask_long %>% rowwise() %>% mutate(taxa_index=10*which(effected==taxa_array)+which(effector==taxa_array))
-interactionMask_long_sd  = unlist(interactionMask_long$sd)
-interactionMask_long_idx = unlist(interactionMask_long$taxa_index)
-
-
-interactionMask_df_reorder = interactionMask_df[,c('effected',taxa_array)]
-
-rownames(interactionMask_df_reorder) = interactionMask_df_reorder$effected
-interactionMask_df_reorder = interactionMask_df_reorder[taxa_array,]
-interactionMask_df_reorder = interactionMask_df_reorder[,2:dim(interactionMask_df_reorder)[2]]
-interactionMask_vector = as.vector(t(interactionMask_df_reorder))
-
-numNegative = length(which(interactionMask_vector==-1))
-numPositive = length(which(interactionMask_vector==+1))
-numAgnostic = length(which(interactionMask_vector==0))
-numGnostic  = numNegative+numPositive
-
 data_list = list(
   
   numTaxa          = length(taxa_array),
@@ -111,8 +89,8 @@ data_list = list(
   observations     = tibble(abundanceArray_meanSubjects),
   
   # priors
-  p_mu           = c(0,4), # normal dist for growth parameters
-  p_a            = c(0,4), # normal dist for interaction parameters
+  p_mu           = c(0,10), # normal dist for growth parameters
+  p_a            = c(0,10), # normal dist for interaction parameters
   p_phi          = 1/phi_use,
   
   t0        = 0, #starting time

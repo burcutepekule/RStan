@@ -118,8 +118,32 @@ y0_meanSubjects[which(y0_meanSubjects==0)] = abs(0.001*rnorm(length(which(y0_mea
 
 abundanceArray_meanSubjects = abundanceArray_meanSubjects[2:dim(abundanceArray_meanSubjects)[1],] #start from day 2, day 0 is the initial condition
 rownames(abundanceArray_meanSubjects) = days_array[2:length(days_array)]
+taxa_array = colnames(abundanceArray_meanSubjects)
 
 
 # ## also read the interaction masking matrix
 interactionMask = read_excel('KNIGHT_DATA/INTERACTION_MASK.xlsx',col_names = TRUE, skip=0)
+
+interactionMask_df              = as.data.frame(interactionMask)
+interactionMask_df[is.na(interactionMask_df)] <- 0
+
+colnames(interactionMask_df)[1] = 'effected'
+interactionMask_long     = interactionMask_df %>% pivot_longer(!effected, names_to = "effector", values_to = "direction") 
+interactionMask_long     = interactionMask_long %>% rowwise() %>% mutate(sd=ifelse(is.na(direction),4,2))
+interactionMask_long     = interactionMask_long %>% rowwise() %>% mutate(taxa_index=10*which(effected==taxa_array)+which(effector==taxa_array))
+interactionMask_long_sd  = unlist(interactionMask_long$sd)
+interactionMask_long_idx = unlist(interactionMask_long$taxa_index)
+
+
+interactionMask_df_reorder = interactionMask_df[,c('effected',taxa_array)]
+
+rownames(interactionMask_df_reorder) = interactionMask_df_reorder$effected
+interactionMask_df_reorder = interactionMask_df_reorder[taxa_array,]
+interactionMask_df_reorder = interactionMask_df_reorder[,2:dim(interactionMask_df_reorder)[2]]
+interactionMask_vector = as.vector(t(interactionMask_df_reorder))
+
+numNegative = length(which(interactionMask_vector==-1))
+numPositive = length(which(interactionMask_vector==+1))
+numAgnostic = length(which(interactionMask_vector==0))
+numGnostic  = numNegative+numPositive
 

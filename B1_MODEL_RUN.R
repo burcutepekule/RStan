@@ -14,7 +14,7 @@ source('RESHAPE_DATA_KNIGHT_L6.R')
 # }
 
 
-df_config     = read.table('config_raw.txt', header = TRUE, sep = "", dec = ".")
+df_config     = read.table('config_raw_mid.txt', header = TRUE, sep = "", dec = ".")
 
 scale         = df_config[which(df_config[,1]=='scale'),2]
 smoothed      = df_config[which(df_config[,1]=='smoothed'),2]
@@ -76,29 +76,6 @@ if(smoothed==1){
     abundanceArray_meanSubjects[,c]=unlist(smooth_data$fit)
   }
 }
-
-interactionMask_df              = as.data.frame(interactionMask)
-interactionMask_df[is.na(interactionMask_df)] <- 0
-
-colnames(interactionMask_df)[1] = 'effected'
-interactionMask_long     = interactionMask_df %>% pivot_longer(!effected, names_to = "effector", values_to = "direction") 
-interactionMask_long     = interactionMask_long %>% rowwise() %>% mutate(sd=ifelse(is.na(direction),4,2))
-interactionMask_long     = interactionMask_long %>% rowwise() %>% mutate(taxa_index=10*which(effected==taxa_array)+which(effector==taxa_array))
-interactionMask_long_sd  = unlist(interactionMask_long$sd)
-interactionMask_long_idx = unlist(interactionMask_long$taxa_index)
-
-
-interactionMask_df_reorder = interactionMask_df[,c('effected',taxa_array)]
-
-rownames(interactionMask_df_reorder) = interactionMask_df_reorder$effected
-interactionMask_df_reorder = interactionMask_df_reorder[taxa_array,]
-interactionMask_df_reorder = interactionMask_df_reorder[,2:dim(interactionMask_df_reorder)[2]]
-interactionMask_vector = as.vector(t(interactionMask_df_reorder))
-
-numNegative = length(which(interactionMask_vector==-1))
-numPositive = length(which(interactionMask_vector==+1))
-numAgnostic = length(which(interactionMask_vector==0))
-numGnostic  = numNegative+numPositive
 
 data_list = list(
   

@@ -9,13 +9,13 @@ functions {
     int numTimeSteps = x_i[2]; // number of time steps with observed data
     int numAgnostic  = x_i[3];
     int numGnostic   = x_i[4];
-    real p_phi       = x_r[numTaxa+1];
-    
-    
+    // real p_phi       = x_r[numTaxa+1];
+    // real p_phi       = x_r[(numTaxa+1):2*numTaxa];
+
     real dydt[numTaxa];
     real growthRate_vector[numTaxa];
-    real interactionMat_vector_Agnostic[numTaxa*numTaxa];
-    real interactionMat_vector_Gnostic[numTaxa*numTaxa];
+    real interactionMat_vector_Agnostic[numAgnostic];
+    real interactionMat_vector_Gnostic[numGnostic];
     
     int interactionMask_vector[numTaxa*numTaxa];
     
@@ -33,17 +33,10 @@ functions {
       interactionMask_vector[i] = x_i[4+i];
     }
     
-    // Free parameters : separate counter diag vs non-diag because diagonal terms will be negative for sure!
     growthRate_vector               = theta[1:numTaxa];
     interactionMat_vector_Agnostic  = theta[(1+numTaxa):(numTaxa+numAgnostic)];
     interactionMat_vector_Gnostic   = theta[(numTaxa+numAgnostic+1):(numTaxa+numAgnostic+numGnostic)];
 
-    // scale = p_phi;  // LETS SEE IF IT MAKES SENSE TO CONNECT THIS TO PHI (DISPERSION PARAMETER)
-    scale = 1;  // LETS SEE IF IT MAKES SENSE TO CONNECT THIS TO PHI (DISPERSION PARAMETER)
-
-    // Build the matrix with non-diagonal and diagonal terms
-    // print(growthRate_vector)
-    // 
     counter_agnostic = 1;
     counter_gnostic  = 1;
     counter_mask     = 1;
@@ -52,10 +45,10 @@ functions {
       for(c in 1:numTaxa){
         mask = interactionMask_vector[counter_mask];
         if(mask==0){
-          interactionMat[r,c] = scale*interactionMat_vector_Agnostic[counter_agnostic];
+          interactionMat[r,c] = interactionMat_vector_Agnostic[counter_agnostic];
           counter_agnostic    = counter_agnostic + 1;
         }else{
-          interactionMat[r,c] = mask*scale*interactionMat_vector_Gnostic[counter_gnostic];
+          interactionMat[r,c] = mask*interactionMat_vector_Gnostic[counter_gnostic];
           counter_gnostic     = counter_gnostic + 1;
         }
         counter_mask = counter_mask + 1; 
@@ -90,7 +83,7 @@ data {
   // priors
   real p_mu[2];
   real p_a[2];
-  real p_phi;
+  real p_phi[numTaxa];
   
   // Simulation
   int  t0; //starting time
@@ -99,7 +92,8 @@ data {
 }
 
 transformed data {
-  real x_r[numTaxa+1]; // y0 and the dispersion parameter 
+  // real x_r[numTaxa+1]; // y0 and the dispersion parameter 
+  real x_r[2*numTaxa]; // y0 and the dispersion parameter 
   int  x_i[(4+numTaxa*numTaxa)]; 
   
   x_i[1]          = numTaxa;
@@ -109,7 +103,9 @@ transformed data {
   x_i[5:(4+numGnostic+numAgnostic)] = interactionMask_vector;
 
   x_r[1:numTaxa]  = y0[1:numTaxa];
-  x_r[numTaxa+1]  = p_phi;
+  // x_r[numTaxa+1]  = p_phi;
+  x_r[(numTaxa+1):2*numTaxa]  = p_phi;
+
 }
 
 parameters{
@@ -117,9 +113,7 @@ parameters{
   real interactionMat_vector_Agnostic[numAgnostic]; // interaction, directionality unknown
   real<lower=0> interactionMat_vector_Gnostic[numGnostic]; // interaction, directionality known
   real<lower=0> phi[numTaxa]; // dispersion parameters - BE CAREFUL WITH THIS WHEN YOU CHANGE THE SCALE OF DATA!
-  
 }
-
 
 model {
   
@@ -131,8 +125,11 @@ model {
   growthRate_vector ~ normal(p_mu[1],p_mu[2]);
   interactionMat_vector_Agnostic ~ normal(p_a[1],p_a[2]);
   interactionMat_vector_Gnostic  ~ normal(p_a[1],p_a[2]);
-  phi ~ exponential(p_phi);
-  
+  // phi ~ exponential(p_phi);
+  for (i in 1:numTaxa){
+    phi[i] ~ exponential(p_phi[i]);
+  }
+
   theta[1:numTaxa] = growthRate_vector;
   theta[(1+numTaxa):(numTaxa+numAgnostic)]=interactionMat_vector_Agnostic;
   theta[(numTaxa+numAgnostic+1):(numTaxa+numAgnostic+numGnostic)]=interactionMat_vector_Gnostic;
